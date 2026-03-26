@@ -1,4 +1,6 @@
 <RCC>
-    <qresource prefix="MainWindow">
-    </qresource>
+  <qresource prefix="MainWindow">
+    <file>Resources/PadsBot.png</file>
+    <file>Resources/Pads.png</file>
+  </qresource>
 </RCC>

@@ -98,6 +98,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <QtRcc Include="MainWindow.qrc" />
+    <QtUic Include="DevicePage.ui" />
+    <QtUic Include="ElectrodeDisplay.ui" />
     <QtUic Include="MainWindow.ui" />
     <QtMoc Include="MainWindow.h" />
     <ClCompile Include="Config.cpp" />

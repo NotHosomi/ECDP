@@ -10,10 +10,10 @@ class DataManager
 public:
 	static DataManager& Get();
 
-	[[nodiscard]] const Device& GetDevice(DeviceId id) const;
-	[[nodiscard]] const T_Design& GetDesign(DesignId id) const;
+	[[nodiscard]] Device& GetDevice(DeviceId id) const;
+	[[nodiscard]] T_Design& GetDesign(DesignId id) const;
 
-	const Device* AddDevice(DeviceId id, BatchId batch, DesignId design);
+	Device* AddDevice(DeviceId id, BatchId batch, DesignId design);
 	void EditDevice(DeviceId id, BatchId batch, DesignId design);
 
 	bool AddDesign(T_Design tDesign);
