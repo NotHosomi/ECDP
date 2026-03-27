@@ -64,7 +64,7 @@ std::array<T_ErrorBarD, 2> Ingester::ReadEISFiles()
 	for (const auto& cell : csvList[0].GetCol("Frequency (Hz)"))
 	{
 		PointsZ.x.push_back(std::stof(cell));
-		PointsPhase.x.push_back(std::stof(cell));
+		PointsPhase.x.push_back(-std::stof(cell));
 	}
 
 	for (int rowindex = 0; rowindex < csvList[0].GetCol(0).size(); ++rowindex)
