@@ -15,11 +15,16 @@ public:
 	std::map<std::string, std::pair<double, double>> GetEisKeyvals();
 	std::map<std::string, double> CalculateCscVals();
 
+	float GetElectrodeDiameter();
+	float GetElectrodeArea();
+
 private:
 	std::vector<CsvFile> readFiles(const std::vector<std::filesystem::path>& fileaddrs);
 	double hysteresisArea(const std::vector<double>& x, const std::vector<double>& y);
 	std::vector<std::filesystem::path> m_vEisPaths;
 	std::vector<std::filesystem::path> m_vCvPaths;
 	std::vector<std::filesystem::path> m_vCilPaths;
+
+	float m_fElectrodeDiameter;
 };
 

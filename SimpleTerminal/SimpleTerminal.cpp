@@ -49,7 +49,7 @@ int main()
 			std::cout << "  " << iter.first << ": " << iter.second << std::endl;
 			sum += iter.second;
 		}
-		std::cout << "  Average: "
+		std::cout << "  Average: " << (sum / CscVals.size()); << std::endl;
 
 
 		grapher.GraphEIS(deviceId, EisData[0], EisData[1]);

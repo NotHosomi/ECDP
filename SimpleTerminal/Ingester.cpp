@@ -8,6 +8,8 @@
 #include "CsvFile.h"
 #include "stddev.h"
 
+# define M_PI           3.14159265358979323846
+
 Ingester::Ingester(std::filesystem::path deviceDirectory)
 {
 	std::cout << "Files found..." << std::endl;
@@ -54,15 +56,23 @@ Ingester::Ingester(std::filesystem::path deviceDirectory)
 	{
 		std::cout << "Device details not found." << std::endl;
 		std::cout << "Electrode diameter (\xC2\xB5m): ";
-		float diameter;
-		while (!(std::cin >> diameter))
+		while (!(std::cin >> m_fElectrodeDiameter))
 		{
 			std::cin.clear();
 			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
-		std::ofstream file("details.txt");
-		file << "diameter:" << diameter << std::endl;
+		std::ofstream file(deviceDirectory / "details.txt");
+		file << "diameter:" << m_fElectrodeDiameter << std::endl;
 		file.close();
+	}
+	else
+	{
+		// todo: expand with more details if necessary
+		std::ifstream file(deviceDirectory / "details.txt");
+		std::string str;
+		std::getline(file, str);
+		file.close();
+		m_fElectrodeDiameter = std::atof(str.substr(str.find(":")).c_str());		
 	}
 }
 
@@ -158,9 +168,8 @@ std::map<std::string, std::pair<double,double>> Ingester::GetEisKeyvals()
 			}
 		}
 		out.insert({ entry.GetFilename(), keyvals });
-
 	}
-	return ();
+	return out;
 }
 
 std::map<std::string, double> Ingester::CalculateCscVals()
@@ -185,21 +194,39 @@ std::map<std::string, double> Ingester::CalculateCscVals()
 			int loop = std::atoi(scanStrs[i].c_str());
 			if (loop != vLoopOffsets.size())
 			{
-				vLoopOffsets.push_back(loop);
+				vLoopOffsets.push_back(i);
 				currents.emplace_back();
 				voltages.emplace_back();
 			}
 			currents[loop - 1].push_back(std::atof(currentStrs[i].c_str()));
-			voltages[loop - 1].push_back(std::atof(currentStrs[i].c_str()));
+			voltages[loop - 1].push_back(std::atof(voltageStrs[i].c_str()));
 		}
 
-		double csc = 0;
+		double area = 0;
 		for (int i = 1; i < voltages.size(); ++i)
 		{
-			csc += hysteresisArea(voltages[i], currents[i]);
+			area += hysteresisArea(voltages[i], currents[i]);
 		}
-		csc /= voltages.size();
+		area /= voltages.size();
+
+		// todo: convert area to CSC
+		double timeDelta = std::atof(entry.GetCol("Time (s)")[vLoopOffsets[2]/2].c_str())
+						 - std::atof(entry.GetCol("Time (s)")[vLoopOffsets[1]].c_str());
+		double voltDelta = std::atof(entry.GetCol("WE(1).Potential (V)")[vLoopOffsets[2]/2].c_str())
+						 - std::atof(entry.GetCol("WE(1).Potential (V)")[vLoopOffsets[1]].c_str());
+		double scanRate = std::abs(voltDelta / timeDelta);
+		double csc = area / (2 * scanRate * static_cast<double>(GetElectrodeArea()));
 		mCscVals.insert({ entry.GetFilename(), csc });
 	}
 	return mCscVals;
+}
+
+float Ingester::GetElectrodeDiameter()
+{
+	return m_fElectrodeDiameter;
+}
+
+float Ingester::GetElectrodeArea()
+{
+	return std::pow(m_fElectrodeDiameter / 2, 2) * M_PI;
 }
