@@ -148,23 +148,27 @@ std::array<T_ErrorBarD, 2> Ingester::GetEisPlot()
 	return { PointsZ, PointsPhase };
 }
 
-std::map<std::string, std::pair<double,double>> Ingester::GetEisKeyvals()
+std::map<std::string, std::array<double, 3>> Ingester::GetEisKeyvals()
 {
-	std::map<std::string, std::pair<double, double>> out;
+	std::map<std::string, std::array<double, 3>> out;
 	std::vector<CsvFile> csvList = readFiles(m_vEisPaths);
 	for (const auto& entry : csvList)
 	{
-		std::pair<double, double> keyvals{ 0.0, 0.0 };
+		std::array<double, 3> keyvals{ 100000.0, 100000.0, 100000.0 };
 		int index = 0;
 		for (; index < entry.GetCol(0).size(); ++index)
 		{
-			if (entry.GetCol("Frequency (Hz)")[index] == "1000")
+			if (entry.GetCol("Frequency (Hz)")[index] == "100")
 			{
-				keyvals.first = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
+				keyvals[0] = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
 			}
-			else if (entry.GetCol("Frequency (Hz)")[index] == "100")
+			else if (entry.GetCol("Frequency (Hz)")[index] == "1000")
 			{
-				keyvals.second = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
+				keyvals[1] = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
+			}
+			else if (entry.GetCol("Frequency (Hz)")[index] == "1995.3")
+			{
+				keyvals[2] = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
 			}
 		}
 		out.insert({ entry.GetFilename(), keyvals });

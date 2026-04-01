@@ -12,7 +12,7 @@ public:
 	Ingester(std::filesystem::path deviceDirectory);
 
 	std::array<T_ErrorBarD, 2> GetEisPlot();
-	std::map<std::string, std::pair<double, double>> GetEisKeyvals();
+	std::map<std::string, std::array<double, 3>> GetEisKeyvals();
 	std::map<std::string, double> CalculateCscVals();
 
 	float GetElectrodeDiameter();
