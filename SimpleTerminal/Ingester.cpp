@@ -55,7 +55,7 @@ Ingester::Ingester(std::filesystem::path deviceDirectory)
 	if (!std::filesystem::exists(deviceDirectory / "Details.txt"))
 	{
 		std::cout << "Device details not found." << std::endl;
-		std::cout << "Electrode diameter (\xC2\xB5m): ";
+		std::cout << "Electrode diameter (microns): ";
 		while (!(std::cin >> m_fElectrodeDiameter))
 		{
 			std::cin.clear();
@@ -72,7 +72,12 @@ Ingester::Ingester(std::filesystem::path deviceDirectory)
 		std::string str;
 		std::getline(file, str);
 		file.close();
-		m_fElectrodeDiameter = std::atof(str.substr(str.find(":")).c_str());		
+		m_fElectrodeDiameter = static_cast<float>(std::atof(str.substr(str.find(":") + 1).c_str()));
+		if(m_fElectrodeDiameter == 0)
+		{
+			std::cout << "Failed to read details.txt on line \"" + str + "\"" << std::endl;
+			std::cout << "Some things may not work correctly" << std::endl;
+		}
 	}
 }
 
@@ -93,7 +98,7 @@ std::vector<CsvFile> Ingester::readFiles(const std::vector<std::filesystem::path
 double Ingester::hysteresisArea(const std::vector<double>& x, const std::vector<double>& y)
 {
 	double area = 0.0;
-	int n = x.size();
+	int n = static_cast<int>(x.size());
 	int j;
 	for (int i = 0; i < n; ++i)
 	{
@@ -105,6 +110,7 @@ double Ingester::hysteresisArea(const std::vector<double>& x, const std::vector<
 
 std::array<T_ErrorBarD, 2> Ingester::GetEisPlot()
 {
+	std::cout << "\nGenerating EIS plot..." << std::flush;
 	std::vector<CsvFile> csvList = readFiles(m_vEisPaths);
 
 	std::erase_if(csvList, [](const CsvFile& data) {
@@ -145,6 +151,7 @@ std::array<T_ErrorBarD, 2> Ingester::GetEisPlot()
 		PointsPhase.y.push_back(rowPhaseStats.mean);
 		PointsPhase.err.push_back(rowPhaseStats.stddev);
 	}
+	std::cout << " Done" << std::endl;
 	return { PointsZ, PointsPhase };
 }
 
@@ -179,8 +186,10 @@ std::map<std::string, std::array<double, 3>> Ingester::GetEisKeyvals()
 std::map<std::string, double> Ingester::CalculateCscVals()
 {
 	std::map<std::string, double> mCscVals;
+	std::cout << "Reading CV..." << std::endl;
 	std::vector<CsvFile> csvList = readFiles(m_vCvPaths);
 
+	std::cout << "Calculating CSCs..." << std::endl;
 	for(auto entry : csvList)
 	{
 		std::vector<std::string> scanStrs = entry.GetCol("Scan");
@@ -219,7 +228,7 @@ std::map<std::string, double> Ingester::CalculateCscVals()
 		double voltDelta = std::atof(entry.GetCol("WE(1).Potential (V)")[vLoopOffsets[2]/2].c_str())
 						 - std::atof(entry.GetCol("WE(1).Potential (V)")[vLoopOffsets[1]].c_str());
 		double scanRate = std::abs(voltDelta / timeDelta);
-		double csc = area / (2 * scanRate * static_cast<double>(GetElectrodeArea()));
+		double csc = (area / (2 * scanRate * GetElectrodeArea_cm2())) * 1000; // C -> mC
 		mCscVals.insert({ entry.GetFilename(), csc });
 	}
 	return mCscVals;
@@ -230,7 +239,12 @@ float Ingester::GetElectrodeDiameter()
 	return m_fElectrodeDiameter;
 }
 
-float Ingester::GetElectrodeArea()
+double Ingester::GetElectrodeArea_cm2()
+{
+	return GetElectrodeArea_um2() / 1e8;
+}
+
+double Ingester::GetElectrodeArea_um2()
 {
 	return std::pow(m_fElectrodeDiameter / 2, 2) * M_PI;
 }

@@ -16,7 +16,8 @@ public:
 	std::map<std::string, double> CalculateCscVals();
 
 	float GetElectrodeDiameter();
-	float GetElectrodeArea();
+	double GetElectrodeArea_cm2();
+	double GetElectrodeArea_um2();
 
 private:
 	std::vector<CsvFile> readFiles(const std::vector<std::filesystem::path>& fileaddrs);
