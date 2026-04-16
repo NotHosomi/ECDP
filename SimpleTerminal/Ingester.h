@@ -5,6 +5,7 @@
 #include <utility>
 #include "ErrorBarData.h"
 #include "CsvFile.h"
+#include "CvData.h"
 
 struct T_CilData
 {
@@ -17,10 +18,16 @@ class Ingester
 public:
 	Ingester(std::filesystem::path deviceDirectory);
 
-	std::array<T_ErrorBarD, 2> GetEisPlot();
 	std::map<std::string, std::array<double, 3>> GetEisKeyvals();
-	std::map<std::string, double> CalculateCscVals();
+	std::map<std::string, T_CvData> CalculateCscVals();
 	T_CilData CalculateCilVals();
+
+	std::array<T_ErrorBarD, 2> GetEisPlot();
+	std::vector<std::pair<double, double>> GetCvPlot(int electrodeIndex = -1);
+
+	const std::vector<std::filesystem::path> GetEisFiles() const;
+	const std::vector<std::filesystem::path> GetCvFiles() const;
+	const std::vector<std::filesystem::path> GetCilPaths() const;
 
 	float GetElectrodeDiameter();
 	double GetElectrodeArea_cm2();

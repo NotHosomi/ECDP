@@ -13,30 +13,58 @@
 
 std::string RoundToStr(double num) { return std::to_string(static_cast<int>(num + 0.5)); }
 
-int main()
+int main(int argc, char* argv[])
 {
+	std::string dataPath = "";
+	std::string deviceId = "";
+	for (int i = 1; i < argc; ++i)
+	{
+		if (strcmp(argv[i], "-p") == 0 && i < argc - 1)
+		{
+			if (std::filesystem::exists(argv[i + 1]))
+			{
+				dataPath = argv[i + 1];
+				std::cout << "Data directory: " << std::filesystem::path(dataPath) << std::endl;
+				i += 1;
+			}
+			else
+			{
+				std::cout << "Could not find data directory \"" << argv[i + 1] << "\"";
+			}
+		}
+		if (strcmp(argv[i], "-d") == 0 && i < argc - 1)
+		{
+			deviceId = argv[i + 1];
+			std::cout << "deviceId: " << deviceId << std::endl;
+		}
+	}
+
+
 	//SetConsoleOutputCP(CP_UTF8);
 	std::cout << TERM_RESET;
 	//"C:\\Users\\Hosomi\\OneDrive - Imperial College London\\Data\\";
-	std::string dataPath = "";
-	do
+	while (!std::filesystem::exists(dataPath))
 	{
 		std::cout << "Input data path: ";
 		std::cin >> dataPath;
 		std::cin.clear();
-	} while (!std::filesystem::exists(dataPath));
+	}
 
-	std::string deviceId = "";
 	std::string devicePath = "";
 	Grapher grapher(dataPath);
 	for(;;)
 	{
-		std::cout << "Input device ID: ";
-		std::cin >> deviceId;
-		std::cin.clear();
+		if (deviceId == "")
+		{
+			std::cout << "Input device ID: ";
+			std::cin >> deviceId;
+			std::cin.clear();
+		}
 		devicePath = dataPath + "/" + deviceId;
 		if (!std::filesystem::exists(devicePath))
 		{
+			std::cout << "Could not find " << deviceId << std::endl;
+			deviceId = "";
 			continue;
 		}
 
@@ -62,23 +90,26 @@ int main()
 			EisTable.AddRow({iter.first, RoundToStr(iter.second[0]), RoundToStr(iter.second[1]), RoundToStr(iter.second[2]) }, colour);
 		}
 		EisTable.Print(TERM_YELLOW);
-		std::cout << "Average: " << (sum / validCount) << std::endl;
+		std::cout << "  Average: " << (sum / validCount) << std::endl;
 
 		// EIS Plot
 		std::array<T_ErrorBarD, 2> EisData = ingest.GetEisPlot();
 		grapher.GraphEIS(deviceId, EisData[0], EisData[1]);
 
 		// Load CV
-		std::map<std::string, double> CscVals = ingest.CalculateCscVals();
+		std::map<std::string, T_CvData> mCv = ingest.CalculateCscVals();
 		PrintTable CscTable({ "Electrode", "CSC (mC/cm^2)" });
 		sum = 0.0;
-		for (const auto& iter : CscVals)
+		for (const auto& iter : mCv)
 		{
-			CscTable.AddRow({ iter.first, std::to_string(iter.second) });
-			sum += iter.second;
+			CscTable.AddRow({ iter.first, std::to_string(iter.second.dCsc) });
+			sum += iter.second.dCsc;
 		}
 		CscTable.Print(TERM_YELLOW);
-		std::cout << "  Average: " << (sum / CscVals.size()) << std::endl;
+		std::cout << "  Average: " << (sum / mCv.size()) << std::endl;
+
+		// CV Plot
+
 
 		// CIL
 		T_CilData cils = ingest.CalculateCilVals();
@@ -96,5 +127,8 @@ int main()
 
 		// Plot CIL values
 		//todo
+
+
+		deviceId = "";
 	}
 }

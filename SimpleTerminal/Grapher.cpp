@@ -64,8 +64,32 @@ void Grapher::GraphEIS(std::string sId, T_ErrorBarD tZ, T_ErrorBarD tPhase)
 	std::cout << "Done\n" << std::endl;
 }
 
-void Grapher::GraphCV(std::string path, std::string Id)
+void Grapher::GraphCV(std::string path, std::string sId, T_CvData tData)
 {
+	std::map<double, double> loopAvrg;
+	for (const auto& loop : tData.vLoops)
+	{
+		for (int i = 0; i < loop.vVoltages.size(); ++i)
+		{
+			if (!loopAvrg.contains(loop.vVoltages[i]))
+			{
+
+			}
+			loopAvrg[] =
+		}
+	}
+	std::cout << "Rendering CV plot... " << std::flush;
+	using namespace matplot;
+
+	figure(true);
+	hold(false);
+
+
+
+	std::string path = m_PlotDir.string() + "/" + sId + "/Plots/";
+	std::filesystem::create_directories(path);
+	save(path + "CV.png");
+	std::cout << "Done\n" << std::endl;
 }
 
 void Grapher::GraphCIL(std::string path, std::string Id)

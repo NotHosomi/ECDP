@@ -7,6 +7,7 @@
 #include "TerminalColours.h"
 #include "CsvFile.h"
 #include "stddev.h"
+#include "CvData.h"
 
 # define M_PI           3.14159265358979323846
 
@@ -108,6 +109,123 @@ double Ingester::hysteresisArea(const std::vector<double>& x, const std::vector<
 	return std::abs(area) / 2.0;
 }
 
+std::map<std::string, std::array<double, 3>> Ingester::GetEisKeyvals()
+{
+	std::map<std::string, std::array<double, 3>> out;
+	std::vector<CsvFile> csvList = readFiles(m_vEisPaths);
+	for (const auto& entry : csvList)
+	{
+		std::array<double, 3> keyvals{ 100000.0, 100000.0, 100000.0 };
+		int index = 0;
+		for (; index < entry.GetCol(0).size(); ++index)
+		{
+			if (entry.GetCol("Frequency (Hz)")[index] == "100")
+			{
+				keyvals[0] = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
+			}
+			else if (entry.GetCol("Frequency (Hz)")[index] == "1000")
+			{
+				keyvals[1] = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
+			}
+			else if (entry.GetCol("Frequency (Hz)")[index] == "1995.3")
+			{
+				keyvals[2] = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
+			}
+		}
+		out.insert({ entry.GetFilename(), keyvals });
+	}
+	return out;
+}
+
+std::map<std::string, T_CvData> Ingester::CalculateCscVals()
+{
+	std::map<std::string, T_CvData> mOutput;
+	std::cout << "Reading CV..." << std::endl;
+	std::vector<CsvFile> csvList = readFiles(m_vCvPaths);
+
+	std::cout << "Calculating CSCs..." << std::endl;
+	for(auto entry : csvList)
+	{
+		T_CvData tOutput;
+		std::vector<std::string> scanStrs = entry.GetCol("Scan");
+		std::vector<std::string> voltageStrs = entry.GetCol("WE(1).Potential (V)");
+		std::vector<std::string> currentStrs = entry.GetCol("WE(1).Current (A)");
+
+		std::vector<int> vLoopOffsets;
+		vLoopOffsets.push_back(0);
+		tOutput.vLoops.emplace_back();
+		tOutput.vLoops.back().nLoopIndex = 0;
+		for (int i = 0; i < entry.GetCol(0).size(); ++i)
+		{
+			int loop = std::atoi(scanStrs[i].c_str());
+			if (loop != tOutput.vLoops.size())
+			{
+				vLoopOffsets.push_back(i);
+				tOutput.vLoops.emplace_back();
+				tOutput.vLoops.back().nLoopIndex = tOutput.vLoops.size() - 1;
+			}
+			tOutput.vLoops.back().vCurrents.push_back(std::atof(currentStrs[i].c_str()));
+			tOutput.vLoops.back().vVoltages.push_back(std::atof(voltageStrs[i].c_str()));
+		}
+
+		double area = 0;
+		for (int i = 1; i < tOutput.vLoops.size(); ++i)
+		{
+			area += hysteresisArea(tOutput.vLoops[i].vVoltages, tOutput.vLoops[i].vCurrents);
+		}
+		area /= tOutput.vLoops.size();
+
+		// todo: convert area to CSC
+		int t1index = ((vLoopOffsets[2] - vLoopOffsets[1]) / 2) + vLoopOffsets[1];
+		int t0index = vLoopOffsets[1];
+		double timeDelta = std::atof(entry.GetCol("Time (s)")[t1index].c_str())
+						 - std::atof(entry.GetCol("Time (s)")[t0index].c_str());
+		double voltDelta = std::atof(entry.GetCol("WE(1).Potential (V)")[t1index].c_str())
+						 - std::atof(entry.GetCol("WE(1).Potential (V)")[t0index].c_str());
+		double scanRate = std::abs(voltDelta / timeDelta);
+		tOutput.dCsc = (area / (2 * scanRate * GetElectrodeArea_cm2())) * 1000; // C -> mC
+		mOutput.insert({ entry.GetFilename(), tOutput });
+	}
+	return mOutput;
+}
+
+T_CilData Ingester::CalculateCilVals()
+{
+	if (m_vCilPaths.size() == 0)
+	{
+		std::cout << "No voltage transients data found" << std::endl;
+		return {};
+	}
+	std::cout << "Reading voltage transients..." << std::endl;
+	T_CilData output;
+	if (m_vCilPaths.size() > 1)
+	{
+		std::cout << "Multiple voltage transient files found. Using " + m_vCilPaths[0].filename().string() << std::endl;
+	}
+	CsvFile csv(m_vCilPaths[0].string());
+	for (int i = 1; i < csv.GetHeadings().size(); ++i)
+	{
+		output.vPulseWidths.push_back(std::atoi(csv.GetHeadings()[i].c_str()));
+	}
+
+	for (int row = 0; row < csv.GetCol(0).size(); ++row)
+	{
+		int elecNum = std::atoi(csv.GetCol(0)[row].c_str());
+		output.mCilVals.insert({ elecNum, {} });
+		for (int col = 0; col < csv.GetHeadings().size() - 1; ++col)
+		{												
+			double charge =
+				std::atof(csv.GetCol(col + 1)[row].c_str()) * 1e6 // scale to amps
+				* output.vPulseWidths[col] * 1e6 // scale to seconds
+				* 1e6; // scale to milliCoulombs
+			double cil = charge / GetElectrodeArea_cm2();
+			output.mCilVals.at(elecNum).push_back(static_cast<float>(cil));
+		}
+	}
+
+	return output;
+}
+
 std::array<T_ErrorBarD, 2> Ingester::GetEisPlot()
 {
 	std::cout << "\nGenerating EIS plot..." << std::flush;
@@ -155,120 +273,24 @@ std::array<T_ErrorBarD, 2> Ingester::GetEisPlot()
 	return { PointsZ, PointsPhase };
 }
 
-std::map<std::string, std::array<double, 3>> Ingester::GetEisKeyvals()
+std::vector<std::pair<double, double>> Ingester::GetCvPlot(int electrodeIndex)
 {
-	std::map<std::string, std::array<double, 3>> out;
-	std::vector<CsvFile> csvList = readFiles(m_vEisPaths);
-	for (const auto& entry : csvList)
-	{
-		std::array<double, 3> keyvals{ 100000.0, 100000.0, 100000.0 };
-		int index = 0;
-		for (; index < entry.GetCol(0).size(); ++index)
-		{
-			if (entry.GetCol("Frequency (Hz)")[index] == "100")
-			{
-				keyvals[0] = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
-			}
-			else if (entry.GetCol("Frequency (Hz)")[index] == "1000")
-			{
-				keyvals[1] = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
-			}
-			else if (entry.GetCol("Frequency (Hz)")[index] == "1995.3")
-			{
-				keyvals[2] = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
-			}
-		}
-		out.insert({ entry.GetFilename(), keyvals });
-	}
-	return out;
+	return std::vector<std::pair<double, double>>();
 }
 
-std::map<std::string, double> Ingester::CalculateCscVals()
+const std::vector<std::filesystem::path> Ingester::GetEisFiles() const
 {
-	std::map<std::string, double> mCscVals;
-	std::cout << "Reading CV..." << std::endl;
-	std::vector<CsvFile> csvList = readFiles(m_vCvPaths);
-
-	std::cout << "Calculating CSCs..." << std::endl;
-	for(auto entry : csvList)
-	{
-		std::vector<std::string> scanStrs = entry.GetCol("Scan");
-		std::vector<std::string> voltageStrs = entry.GetCol("WE(1).Potential (V)");
-		std::vector<std::string> currentStrs = entry.GetCol("WE(1).Current (A)");
-
-		std::vector<int> vLoopOffsets;
-		std::vector<std::vector<double>> currents;
-		std::vector<std::vector<double>> voltages;
-		vLoopOffsets.push_back(0);
-		currents.emplace_back();
-		voltages.emplace_back();
-		for (int i = 0; i < entry.GetCol(0).size(); ++i)
-		{
-			int loop = std::atoi(scanStrs[i].c_str());
-			if (loop != vLoopOffsets.size())
-			{
-				vLoopOffsets.push_back(i);
-				currents.emplace_back();
-				voltages.emplace_back();
-			}
-			currents[loop - 1].push_back(std::atof(currentStrs[i].c_str()));
-			voltages[loop - 1].push_back(std::atof(voltageStrs[i].c_str()));
-		}
-
-		double area = 0;
-		for (int i = 1; i < voltages.size(); ++i)
-		{
-			area += hysteresisArea(voltages[i], currents[i]);
-		}
-		area /= voltages.size();
-
-		// todo: convert area to CSC
-		double timeDelta = std::atof(entry.GetCol("Time (s)")[vLoopOffsets[2]/2].c_str())
-						 - std::atof(entry.GetCol("Time (s)")[vLoopOffsets[1]].c_str());
-		double voltDelta = std::atof(entry.GetCol("WE(1).Potential (V)")[vLoopOffsets[2]/2].c_str())
-						 - std::atof(entry.GetCol("WE(1).Potential (V)")[vLoopOffsets[1]].c_str());
-		double scanRate = std::abs(voltDelta / timeDelta);
-		double csc = (area / (2 * scanRate * GetElectrodeArea_cm2())) * 1000; // C -> mC
-		mCscVals.insert({ entry.GetFilename(), csc });
-	}
-	return mCscVals;
+	return m_vEisPaths;
 }
 
-T_CilData Ingester::CalculateCilVals()
+const std::vector<std::filesystem::path> Ingester::GetCvFiles() const
 {
-	if (m_vCilPaths.size() == 0)
-	{
-		std::cout << "No voltage transients data found" << std::endl;
-		return {};
-	}
-	std::cout << "Reading voltage transients..." << std::endl;
-	T_CilData output;
-	if (m_vCilPaths.size() > 1)
-	{
-		std::cout << "Multiple voltage transient files found. Using " + m_vCilPaths[0].filename().string() << std::endl;
-	}
-	CsvFile csv(m_vCilPaths[0].string());
-	for (int i = 1; i < csv.GetHeadings().size(); ++i)
-	{
-		output.vPulseWidths.push_back(std::atoi(csv.GetHeadings()[i].c_str()));
-	}
+	return m_vCvPaths;
+}
 
-	for (int row = 0; row < csv.GetCol(0).size(); ++row)
-	{
-		int elecNum = std::atoi(csv.GetCol(0)[row].c_str());
-		output.mCilVals.insert({ elecNum, {} });
-		for (int col = 0; col < csv.GetHeadings().size() - 1; ++col)
-		{												
-			double charge =
-				std::atof(csv.GetCol(col + 1)[row].c_str()) * 1e6 // scale to amps
-				* output.vPulseWidths[col] * 1e6 // scale to seconds
-				* 1e6; // scale to milliCoulombs
-			double cil = charge / GetElectrodeArea_cm2();
-			output.mCilVals.at(elecNum).push_back(cil);
-		}
-	}
-
-	return output;
+const std::vector<std::filesystem::path> Ingester::GetCilPaths() const
+{
+	return m_vCilPaths;
 }
 
 float Ingester::GetElectrodeDiameter()

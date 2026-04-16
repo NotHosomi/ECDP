@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <filesystem>
+#include <algorithm>
 
 CsvFile::CsvFile(const std::string& sFilePath, char cDelimiter, char sRowDelimiter)
 {
@@ -63,15 +64,66 @@ const std::vector<std::string>& CsvFile::GetCol(unsigned int index) const
 
 const std::vector<std::string>& CsvFile::GetCol(std::string header) const
 {
+    int i = FindHeader(header);
+    if (i >= 0)
+    {
+        return GetCol(i);
+    }
+    throw std::invalid_argument("Header \"" + header + "\" does not exist in CSV");
+}
+
+int CsvFile::FindHeader(const std::string& header) const
+{
     for (int i = 0; i < m_vHeadings.size(); ++i)
     {
         if (header == m_vHeadings[i])
         {
-            return GetCol(i);
+            return i;
         }
     }
+    return -1;
+}
+
+std::vector<double> CsvFile::GetColAsDouble(unsigned int index) const
+{
+    auto col = GetCol(index);
+    std::vector<double> out(col.size());
+    std::transform(col.begin(), col.end(), out.begin(),
+        [](const std::string& cell) {
+            return atof(cell.c_str());
+        });
+    return out;
+}
+
+std::vector<double> CsvFile::GetColAsDouble(std::string header) const
+{
+    int i = FindHeader(header);
+    if (i >= 0)
+    {
+        return GetColAsDouble(i);
+    }
     throw std::invalid_argument("Header \"" + header + "\" does not exist in CSV");
-    
+}
+
+std::vector<int> CsvFile::GetColAsInt(unsigned int index) const
+{
+    auto col = GetCol(index);
+    std::vector<int> out(col.size());
+    std::transform(col.begin(), col.end(), out.begin(),
+        [](const std::string& cell) {
+            return atoi(cell.c_str());
+        });
+    return out;
+}
+
+std::vector<int> CsvFile::GetColAsInt(std::string header) const
+{
+    int i = FindHeader(header);
+    if (i >= 0)
+    {
+        return GetColAsInt(i);
+    }
+    throw std::invalid_argument("Header \"" + header + "\" does not exist in CSV");
 }
 
 const std::string& CsvFile::GetFilename() const

@@ -59,5 +59,8 @@
     <ClInclude Include="PrintTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CvData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
