@@ -11,5 +11,5 @@ struct T_CvLoop
 struct T_CvData
 {
 	std::vector<T_CvLoop> vLoops;
-	double dCsc;
+	double dCsc = -1.0;
 };

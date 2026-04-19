@@ -6,12 +6,8 @@
 #include "ErrorBarData.h"
 #include "CsvFile.h"
 #include "CvData.h"
+#include "CilData.h"
 
-struct T_CilData
-{
-	std::vector<int> vPulseWidths;
-	std::map<int, std::vector<float>> mCilVals;
-};
 
 class Ingester
 {
@@ -23,7 +19,7 @@ public:
 	T_CilData CalculateCilVals();
 
 	std::array<T_ErrorBarD, 2> GetEisPlot();
-	std::vector<std::pair<double, double>> GetCvPlot(int electrodeIndex = -1);
+	T_ErrorBarD GetCvPlot();
 
 	const std::vector<std::filesystem::path> GetEisFiles() const;
 	const std::vector<std::filesystem::path> GetCvFiles() const;
@@ -35,6 +31,7 @@ public:
 
 private:
 	std::vector<CsvFile> readFiles(const std::vector<std::filesystem::path>& fileaddrs);
+	T_CvData parseCvFile(const CsvFile& csv);
 	double hysteresisArea(const std::vector<double>& x, const std::vector<double>& y);
 	std::vector<std::filesystem::path> m_vEisPaths;
 	std::vector<std::filesystem::path> m_vCvPaths;

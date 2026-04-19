@@ -17,6 +17,7 @@ int main(int argc, char* argv[])
 {
 	std::string dataPath = "";
 	std::string deviceId = "";
+	bool bPlotAll = false;
 	for (int i = 1; i < argc; ++i)
 	{
 		if (strcmp(argv[i], "-p") == 0 && i < argc - 1)
@@ -32,10 +33,21 @@ int main(int argc, char* argv[])
 				std::cout << "Could not find data directory \"" << argv[i + 1] << "\"";
 			}
 		}
-		if (strcmp(argv[i], "-d") == 0 && i < argc - 1)
+		else if (strcmp(argv[i], "-d") == 0 && i < argc - 1)
 		{
 			deviceId = argv[i + 1];
 			std::cout << "deviceId: " << deviceId << std::endl;
+			i += 1;
+		}
+		else if (strcmp(argv[i], "--PlotAll") == 0)
+		{
+			bPlotAll = true;
+		}
+		else
+		{
+			std::cout << "unrecognised parameter \"" << argv[i] << "\"" << std::endl;
+			std::cout << "aborting" << std::endl;
+			return 1;
 		}
 	}
 
@@ -89,7 +101,7 @@ int main(int argc, char* argv[])
 			}
 			EisTable.AddRow({iter.first, RoundToStr(iter.second[0]), RoundToStr(iter.second[1]), RoundToStr(iter.second[2]) }, colour);
 		}
-		EisTable.Print(TERM_YELLOW);
+		EisTable.Print(TERM_BOLDRED);
 		std::cout << "  Average: " << (sum / validCount) << std::endl;
 
 		// EIS Plot
@@ -105,11 +117,19 @@ int main(int argc, char* argv[])
 			CscTable.AddRow({ iter.first, std::to_string(iter.second.dCsc) });
 			sum += iter.second.dCsc;
 		}
-		CscTable.Print(TERM_YELLOW);
+		CscTable.Print(TERM_BOLDBLUE);
 		std::cout << "  Average: " << (sum / mCv.size()) << std::endl;
 
 		// CV Plot
-
+		T_ErrorBarD tCvPlot = ingest.GetCvPlot();
+		grapher.GraphCV(deviceId, tCvPlot);
+		if (bPlotAll)
+		{
+			for (const auto& [key, data] : mCv)
+			{
+				grapher.GraphCV(deviceId, key, data);
+			}
+		}
 
 		// CIL
 		T_CilData cils = ingest.CalculateCilVals();
@@ -122,10 +142,12 @@ int main(int argc, char* argv[])
 			for (const auto& val : row.second) { rowtext.push_back(std::to_string(val)); };
 			cilTable.AddRow(rowtext);
 		}
-		cilTable.Print();
+		cilTable.Print(TERM_YELLOW);
+		std::cout << "  Average: " << (sum / mCv.size()) << std::endl;
 
 
 		// Plot CIL values
+		grapher.GraphCIL(deviceId, cils);
 		//todo
 
 

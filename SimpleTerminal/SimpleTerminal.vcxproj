@@ -129,6 +129,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CilData.h" />
     <ClCompile Include="CsvFile.cpp" />
     <ClCompile Include="ErrorBarData.cpp" />
     <ClCompile Include="Grapher.cpp" />

@@ -96,6 +96,28 @@ std::vector<CsvFile> Ingester::readFiles(const std::vector<std::filesystem::path
 	return csvList;
 }
 
+T_CvData Ingester::parseCvFile(const CsvFile& csv)
+{
+	T_CvData tOutput;
+	std::vector<std::string> scanStrs = csv.GetCol("Scan");
+	std::vector<std::string> voltageStrs = csv.GetCol("WE(1).Potential (V)");
+	std::vector<std::string> currentStrs = csv.GetCol("WE(1).Current (A)");
+
+	std::vector<int> vLoopOffsets;
+	for (int i = 0; i < csv.GetCol(0).size(); ++i)
+	{
+		int loop = std::atoi(scanStrs[i].c_str());
+		if (loop != tOutput.vLoops.size())
+		{
+			tOutput.vLoops.emplace_back();
+			tOutput.vLoops.back().nLoopIndex = static_cast<int>(tOutput.vLoops.size()) - 1;
+		}
+		tOutput.vLoops.back().vCurrents.push_back(std::atof(currentStrs[i].c_str()));
+		tOutput.vLoops.back().vVoltages.push_back(std::atof(voltageStrs[i].c_str()));
+	}
+	return tOutput;
+}
+
 double Ingester::hysteresisArea(const std::vector<double>& x, const std::vector<double>& y)
 {
 	double area = 0.0;
@@ -137,6 +159,7 @@ std::map<std::string, std::array<double, 3>> Ingester::GetEisKeyvals()
 	return out;
 }
 
+// todo: fix csc nan
 std::map<std::string, T_CvData> Ingester::CalculateCscVals()
 {
 	std::map<std::string, T_CvData> mOutput;
@@ -146,26 +169,18 @@ std::map<std::string, T_CvData> Ingester::CalculateCscVals()
 	std::cout << "Calculating CSCs..." << std::endl;
 	for(auto entry : csvList)
 	{
-		T_CvData tOutput;
-		std::vector<std::string> scanStrs = entry.GetCol("Scan");
-		std::vector<std::string> voltageStrs = entry.GetCol("WE(1).Potential (V)");
-		std::vector<std::string> currentStrs = entry.GetCol("WE(1).Current (A)");
+		T_CvData tOutput = parseCvFile(entry);
 
 		std::vector<int> vLoopOffsets;
 		vLoopOffsets.push_back(0);
-		tOutput.vLoops.emplace_back();
-		tOutput.vLoops.back().nLoopIndex = 0;
+		std::vector<int> scanCol = entry.GetColAsInt("Scan");
 		for (int i = 0; i < entry.GetCol(0).size(); ++i)
 		{
-			int loop = std::atoi(scanStrs[i].c_str());
+			int loop = scanCol[i];
 			if (loop != tOutput.vLoops.size())
 			{
 				vLoopOffsets.push_back(i);
-				tOutput.vLoops.emplace_back();
-				tOutput.vLoops.back().nLoopIndex = tOutput.vLoops.size() - 1;
 			}
-			tOutput.vLoops.back().vCurrents.push_back(std::atof(currentStrs[i].c_str()));
-			tOutput.vLoops.back().vVoltages.push_back(std::atof(voltageStrs[i].c_str()));
 		}
 
 		double area = 0;
@@ -228,7 +243,7 @@ T_CilData Ingester::CalculateCilVals()
 
 std::array<T_ErrorBarD, 2> Ingester::GetEisPlot()
 {
-	std::cout << "\nGenerating EIS plot..." << std::flush;
+	std::cout << "Generating EIS plot..." << std::flush;
 	std::vector<CsvFile> csvList = readFiles(m_vEisPaths);
 
 	std::erase_if(csvList, [](const CsvFile& data) {
@@ -273,9 +288,44 @@ std::array<T_ErrorBarD, 2> Ingester::GetEisPlot()
 	return { PointsZ, PointsPhase };
 }
 
-std::vector<std::pair<double, double>> Ingester::GetCvPlot(int electrodeIndex)
+T_ErrorBarD Ingester::GetCvPlot()
 {
-	return std::vector<std::pair<double, double>>();
+	std::cout << "Building CV plot... " << std::flush;
+	std::vector<T_CvData> grossCv;
+	for (const auto& csv : readFiles(m_vCvPaths))
+	{
+		T_CvData tData = parseCvFile(csv);
+		// average per loop
+		std::map<double, double>& loopAvrg = grossCv.emplace_back();	// todo: this doesn't work, cuz it looses the ORDER
+		for (int i = 1; i < tData.vLoops.size(); ++i)
+		{
+			const T_CvLoop& loop = tData.vLoops[i];
+			for (int j = 0; j < loop.vVoltages.size(); ++j)
+			{
+				if (!loopAvrg.contains(loop.vVoltages[j]))
+				{
+					loopAvrg.insert({ loop.vVoltages[j], loop.vCurrents[j] / tData.vLoops.size() });
+				}
+				else
+				{
+					loopAvrg.at(loop.vVoltages[j]) += loop.vCurrents[j] / tData.vLoops.size();
+				}
+			}
+		}
+	}
+	// average across files, with stddev
+	std::map<double, T_Stats> stats = stddev(grossCv);
+
+
+	T_ErrorBarD output;
+	for (const auto& iter : stats)
+	{
+		output.x.push_back(iter.first);
+		output.y.push_back(iter.second.mean);
+		output.err.push_back(iter.second.stddev);
+	}
+	std::cout << "Done" << std::endl;
+	return output;
 }
 
 const std::vector<std::filesystem::path> Ingester::GetEisFiles() const

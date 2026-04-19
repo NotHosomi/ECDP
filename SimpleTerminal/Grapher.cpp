@@ -2,6 +2,7 @@
 #include "Grapher.h"
 #include <algorithm>
 #include <matplot/matplot.h>
+#include "CilData.h"
 
 Grapher::Grapher(std::filesystem::path outputDir) :
 	m_PlotDir(outputDir)
@@ -64,27 +65,25 @@ void Grapher::GraphEIS(std::string sId, T_ErrorBarD tZ, T_ErrorBarD tPhase)
 	std::cout << "Done\n" << std::endl;
 }
 
-void Grapher::GraphCV(std::string path, std::string sId, T_CvData tData)
+// TODO: Graph CV
+void Grapher::GraphCV(std::string sId, T_ErrorBarD tLoop)
 {
-	std::map<double, double> loopAvrg;
-	for (const auto& loop : tData.vLoops)
-	{
-		for (int i = 0; i < loop.vVoltages.size(); ++i)
-		{
-			if (!loopAvrg.contains(loop.vVoltages[i]))
-			{
-
-			}
-			loopAvrg[] =
-		}
-	}
-	std::cout << "Rendering CV plot... " << std::flush;
 	using namespace matplot;
+	std::cout << "Rendering CV plot... " << std::flush;
+
+	// make the data loop
+	tLoop.x.push_back(tLoop.x.front());
+	tLoop.y.push_back(tLoop.y.front());
+	tLoop.err.push_back(tLoop.err.front());
+
 
 	figure(true);
 	hold(false);
+	error_bar_handle magnitudePlot = errorbar(tLoop.x, tLoop.y, tLoop.err);
 
-
+	title(sId + " CV");
+	ylabel("Current (A)");
+	xlabel("Voltage (V)");
 
 	std::string path = m_PlotDir.string() + "/" + sId + "/Plots/";
 	std::filesystem::create_directories(path);
@@ -92,6 +91,36 @@ void Grapher::GraphCV(std::string path, std::string sId, T_CvData tData)
 	std::cout << "Done\n" << std::endl;
 }
 
-void Grapher::GraphCIL(std::string path, std::string Id)
+void Grapher::GraphCV(std::string sId, std::string filename, T_CvData tElectrode)
 {
+	std::cout << "Rendering CV plot (" << filename << ")... " << std::flush;
+
+	matplot::figure(true);
+	matplot::hold(true);
+	for (int i = 0; i < tElectrode.vLoops.size() - 1; ++i)
+	{
+		tElectrode.vLoops[i].vVoltages.push_back(tElectrode.vLoops[i+1].vVoltages.front());
+		tElectrode.vLoops[i].vCurrents.push_back(tElectrode.vLoops[i+1].vCurrents.front());
+		matplot::plot(tElectrode.vLoops[i].vVoltages, tElectrode.vLoops[i].vCurrents);
+	}
+
+	matplot::title(filename + " CV");
+	matplot::ylabel("Current (A)");
+	matplot::xlabel("Voltage (V)");
+
+	std::string path = m_PlotDir.string() + "/" + sId + "/Plots/CV/";
+	std::filesystem::create_directories(path);
+	matplot::save(path + filename +"CV.png");
+	std::cout << "Done\n" << std::endl;
+}
+
+void Grapher::GraphCIL(std::string sId, const T_CilData& data)
+{
+	if (data.vPulseWidths.size() <= 1)
+	{
+		std::cout << "Only one pulse width found - Skipping CIL Plot" << std::endl;
+		return;
+	}
+
+
 }
