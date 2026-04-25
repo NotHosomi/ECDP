@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClInclude Include="CsvFile.h" />
     <ClInclude Include="CvData.h" />
+    <ClInclude Include="DeviceInfo.h" />
     <ClInclude Include="ErrorBarData.h" />
     <ClInclude Include="Grapher.h" />
     <ClInclude Include="Ingester.h" />

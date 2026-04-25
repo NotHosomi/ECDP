@@ -58,33 +58,26 @@ Ingester::Ingester(std::filesystem::path deviceDirectory)
 		std::cout << TERM_RESET;
 	}
 
-
-	if (!std::filesystem::exists(deviceDirectory / "Details.txt"))
+	if (FetchDeviceDetails(deviceDirectory / "DeviceInfo.json"))
 	{
-		std::cout << "Device details not found." << std::endl;
+		T_DeviceInfo info;
+
+		std::cout << "Could not read device details" << std::endl;
 		std::cout << "Electrode diameter (microns): ";
-		while (!(std::cin >> m_fElectrodeDiameter))
+		while (!(std::cin >> info.electrodeDiameter))
 		{
 			std::cin.clear();
 			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
-		std::ofstream file(deviceDirectory / "details.txt");
-		file << "diameter:" << m_fElectrodeDiameter << std::endl;
-		file.close();
-	}
-	else
-	{
-		// todo: expand with more details if necessary
-		std::ifstream file(deviceDirectory / "details.txt");
-		std::string str;
-		std::getline(file, str);
-		file.close();
-		m_fElectrodeDiameter = static_cast<float>(std::atof(str.substr(str.find(":") + 1).c_str()));
-		if(m_fElectrodeDiameter == 0)
+		std::cout << "Electrode count (microns): ";
+		while (!(std::cin >> info.electrodeCount))
 		{
-			std::cout << "Failed to read details.txt on line \"" + str + "\"" << std::endl;
-			std::cout << "Some things may not work correctly" << std::endl;
+			std::cin.clear();
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
+		std::cout << "Storing device details..." << std::flush;
+		StoreDeviceDetails(deviceDirectory / "DeviceInfo.json", info)
+		std::cout << "Done" << std::endl;
 	}
 }
 
@@ -106,7 +99,6 @@ T_CvData Ingester::parseCvFile(const CsvFile& csv) const
 {
 	try
 	{
-
 		T_CvData tOutput;
 		std::vector<std::string> scanStrs = csv.GetCol("Scan");
 		std::vector<std::string> voltageStrs = csv.GetCol("WE(1).Potential (V)");
@@ -146,6 +138,37 @@ double Ingester::hysteresisArea(const std::vector<double>& x, const std::vector<
 	}
 	return std::abs(area) / 2.0;
 }
+
+bool Ingester::FetchDeviceDetails(const std::filesystem::path& path)
+{
+	T_DeviceInfo info;
+	if (!std::filesystem::exists(path))
+	{
+		return false;
+	}
+
+	std::ifstream file(path);
+	nlohmann::json j = nlohmann::json::parse(file);
+	file.close();
+	try
+	{
+		m_tDeviceInfo = j.get<T_DeviceInfo>();
+	}
+	catch (std::exception e)
+	{
+		return false;
+	}
+	return true;
+}
+
+void Ingester::StoreDeviceDetails(const std::filesystem::path& path, const T_DeviceInfo& info)
+{
+	nlohmann::json j = info;
+	std::ofstream file(path);
+	file << j.dump(2);
+	file.close();
+}
+
 
 std::map<std::string, std::array<double, 3>> Ingester::GetEisKeyvals() const
 {

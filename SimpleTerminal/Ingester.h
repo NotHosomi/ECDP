@@ -7,6 +7,7 @@
 #include "CsvFile.h"
 #include "CvData.h"
 #include "CilData.h"
+#include "DeviceInfo.h"
 
 
 class Ingester
@@ -38,6 +39,8 @@ private:
 	std::vector<std::filesystem::path> m_vCilPaths;
 	std::vector<std::filesystem::path> m_vCrosstalkPaths;
 
-	float m_fElectrodeDiameter;
+	bool FetchDeviceDetails(const std::filesystem::path& path);
+	void StoreDeviceDetails(const std::filesystem::path& path, const T_DeviceInfo& info);
+	T_DeviceInfo m_tDeviceInfo;
 };
 
