@@ -9,6 +9,7 @@
 #include "CsvFile.h"
 #include "stddev.h"
 #include "CvData.h"
+#include "JsonLoader.h"
 
 # define M_PI           3.14159265358979323846
 
@@ -58,25 +59,26 @@ Ingester::Ingester(std::filesystem::path deviceDirectory)
 		std::cout << TERM_RESET;
 	}
 
-	if (FetchDeviceDetails(deviceDirectory / "DeviceInfo.json"))
+	if (!LoadJson<T_DeviceInfo>(deviceDirectory / "DeviceInfo.json", m_tDeviceInfo))
 	{
-		T_DeviceInfo info;
-
 		std::cout << "Could not read device details" << std::endl;
 		std::cout << "Electrode diameter (microns): ";
-		while (!(std::cin >> info.electrodeDiameter))
+		while (!(std::cin >> m_tDeviceInfo.electrodeDiameter))
 		{
 			std::cin.clear();
 			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
 		std::cout << "Electrode count (microns): ";
-		while (!(std::cin >> info.electrodeCount))
+		while (!(std::cin >> m_tDeviceInfo.electrodeCount))
 		{
 			std::cin.clear();
 			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
 		std::cout << "Storing device details..." << std::flush;
-		StoreDeviceDetails(deviceDirectory / "DeviceInfo.json", info);
+		if (!SaveJson(deviceDirectory / "DeviceInfo.json", m_tDeviceInfo))
+		{
+			std::cout << "Failed to save device details" << std::endl;
+		}
 		std::cout << "Done" << std::endl;
 	}
 }
@@ -139,61 +141,36 @@ double Ingester::hysteresisArea(const std::vector<double>& x, const std::vector<
 	return std::abs(area) / 2.0;
 }
 
-bool Ingester::FetchDeviceDetails(const std::filesystem::path& path)
+std::map<std::string, std::vector<double>> Ingester::GetEisKeyvals(const std::vector<std::string>& vKeyVals) const
 {
-	if (!std::filesystem::exists(path))
-	{
-		return false;
-	}
-
-	std::ifstream file(path);
-	nlohmann::json j = nlohmann::json::parse(file);
-	file.close();
-	try
-	{
-		m_tDeviceInfo = j.get<T_DeviceInfo>();
-	}
-	catch (std::exception e)
-	{
-		return false;
-	}
-	return true;
-}
-
-void Ingester::StoreDeviceDetails(const std::filesystem::path& path, const T_DeviceInfo& info)
-{
-	nlohmann::json j = info;
-	std::ofstream file(path);
-	file << j.dump(2);
-	file.close();
-}
-
-
-std::map<std::string, std::array<double, 3>> Ingester::GetEisKeyvals() const
-{
-	std::map<std::string, std::array<double, 3>> out;
+	std::map<std::string, std::vector<double>> out;
 	std::vector<CsvFile> csvList = readFiles(m_vEisPaths);
+	std::vector<double> avrgs(vKeyVals.size(), 0);
+	std::vector<int> avrgInstances(vKeyVals.size(), 0);
 	for (const auto& entry : csvList)
 	{
-		std::array<double, 3> keyvals{ 100000.0, 100000.0, 100000.0 };
+		std::vector<double> keyvals(vKeyVals.size(), -1);
 		int index = 0;
 		for (; index < entry.GetCol(0).size(); ++index)
 		{
-			if (entry.GetCol("Frequency (Hz)")[index] == "100")
+			for (int i = 0; i < vKeyVals.size(); ++i)
 			{
-				keyvals[0] = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
-			}
-			else if (entry.GetCol("Frequency (Hz)")[index] == "1000")
-			{
-				keyvals[1] = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
-			}
-			else if (entry.GetCol("Frequency (Hz)")[index] == "1995.3")
-			{
-				keyvals[2] = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
+				if (entry.GetCol("Frequency (Hz)")[index] == vKeyVals[i])
+				{
+					double val = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
+					keyvals[i] = val;
+					avrgs[i] += val;
+					avrgInstances[i] += 1;
+				}
 			}
 		}
 		out.insert({ entry.GetFilename(), keyvals });
 	}
+	for (int i = 0; i < avrgs.size(); ++i)
+	{
+		avrgs[i] /= avrgInstances[i];
+	}
+	out.insert({ "{AVRG}", avrgs });
 	return out;
 }
 
@@ -257,24 +234,37 @@ T_CilData Ingester::CalculateCilVals() const
 		std::cout << "Multiple voltage transient files found. Using " + m_vCilPaths[0].filename().string() << std::endl;
 	}
 	CsvFile csv(m_vCilPaths[0].string());
+	if (csv.GetHeadings().size() == 1)
+	{
+		csv = CsvFile(m_vCilPaths[0].string(), ';');
+	}
 	for (int i = 1; i < csv.GetHeadings().size(); ++i)
 	{
 		output.vPulseWidths.push_back(std::atoi(csv.GetHeadings()[i].c_str()));
 	}
-
+	output.vAvrgCils.resize(output.vPulseWidths.size(), 0);
+	std::vector<int> avrgInstances(output.vAvrgCils.size(), 0);
+	
 	for (int row = 0; row < csv.GetCol(0).size(); ++row)
 	{
 		int elecNum = std::atoi(csv.GetCol(0)[row].c_str());
 		output.mCilVals.insert({ elecNum, {} });
 		for (int col = 0; col < csv.GetHeadings().size() - 1; ++col)
-		{												
+		{
 			double charge =
-				std::atof(csv.GetCol(col + 1)[row].c_str()) * 1e6 // scale to amps
-				* output.vPulseWidths[col] * 1e6 // scale to seconds
-				* 1e6; // scale to milliCoulombs
+				std::atof(csv.GetCol(col + 1)[row].c_str()) * 1e-6 // scale to amps
+				* output.vPulseWidths[col] * 1e-6 // scale to seconds
+				* 1e3; // scale to milliCoulombs
 			double cil = charge / GetElectrodeArea_cm2();
 			output.mCilVals.at(elecNum).push_back(static_cast<float>(cil));
+
+			output.vAvrgCils[col] += static_cast<float>(cil);
+			avrgInstances[col] += 1;
 		}
+	}
+	for (int i = 0; i < output.vAvrgCils.size(); ++i)
+	{
+		output.vAvrgCils[i] /= avrgInstances[i];
 	}
 
 	return output;

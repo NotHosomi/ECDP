@@ -15,7 +15,7 @@ class Ingester
 public:
 	Ingester(std::filesystem::path deviceDirectory);
 
-	std::map<std::string, std::array<double, 3>> GetEisKeyvals() const;
+	std::map<std::string, std::vector<double>> GetEisKeyvals(const std::vector<std::string>& vKeyVals) const;
 	std::map<std::string, T_CvData> CalculateCscVals() const;
 	T_CilData CalculateCilVals() const;
 

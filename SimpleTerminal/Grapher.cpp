@@ -131,6 +131,20 @@ void Grapher::GraphCIL(std::string sId, const T_CilData& data)
 		std::cout << "Only one pulse width found - Skipping CIL Plot" << std::endl;
 		return;
 	}
+	std::cout << "Rendering CIL plot..." << std::flush;
 
+	std::cout << "Todo lol" << std::endl;
 
+}
+
+std::string Grapher::GetGraphPath(std::string sId, E_GraphType eType)
+{
+	std::string sFilename;
+	switch (eType)
+	{
+	case E_GraphType::Eis: sFilename = "EIS/"; break;
+	case E_GraphType::Cv: sFilename = "CV/"; break;
+	case E_GraphType::Cil: sFilename = "CIL/"; break;
+	}
+	return m_PlotDir.string() + "/" + sId + "/Plots/" + sFilename + ".png";
 }

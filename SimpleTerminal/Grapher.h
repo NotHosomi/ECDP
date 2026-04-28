@@ -6,6 +6,13 @@
 
 struct T_CilData;
 
+enum E_GraphType
+{
+	Eis,
+	Cv,
+	Cil
+};
+
 class Grapher
 {
 public:
@@ -15,6 +22,8 @@ public:
 	void GraphCV(std::string sId, T_ErrorBarD tLoop);
 	void GraphCV(std::string sId, std::string filename, T_CvData tLoop);
 	void GraphCIL(std::string sId, const T_CilData& data);
+
+	std::string GetGraphPath(std::string sId, E_GraphType eType);
 
 private:
 	std::filesystem::path m_PlotDir;
