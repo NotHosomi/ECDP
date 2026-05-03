@@ -4,10 +4,17 @@
 #include <matplot/matplot.h>
 #include "CilData.h"
 
-Grapher::Grapher(std::filesystem::path outputDir) :
-	m_PlotDir(outputDir)
+Grapher::Grapher(std::filesystem::path outputDir)
 {
+	SetOutputPath(outputDir);
+}
 
+void Grapher::SetOutputPath(std::filesystem::path outputDir)
+{
+	if (!std::filesystem::exists(outputDir))
+	{
+		std::filesystem::create_directories(outputDir);
+	}
 }
 
 void Grapher::GraphEIS(std::string sId, T_ErrorBarD tZ, T_ErrorBarD tPhase)

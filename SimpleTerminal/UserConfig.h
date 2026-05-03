@@ -14,7 +14,7 @@ struct T_EisConfig
 
 struct T_CvConfig
 {
-	float minValidCsc = 0.1;
+	float minValidCsc = 0.1f;
 	bool calcCsc = true;
 	bool plotCv = true;
 	bool plotEachElectrode = false;
@@ -31,7 +31,8 @@ struct T_CilConfig
 
 struct T_UserConfig
 {
-	std::string dataDirectory;
+	std::string dataDirectory = "";
+	std::string plotDirectory = "./Plots";
 	T_EisConfig eis;
 	T_CvConfig cv;
 	T_CilConfig cil;

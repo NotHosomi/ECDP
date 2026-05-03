@@ -131,6 +131,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CilData.h" />
+    <ClCompile Include="Commands.cpp" />
+    <ClCompile Include="Core.cpp" />
     <ClCompile Include="CsvFile.cpp" />
     <ClCompile Include="ErrorBarData.cpp" />
     <ClCompile Include="Grapher.cpp" />
@@ -138,8 +140,11 @@
     <ClCompile Include="PrintTable.cpp" />
     <ClCompile Include="SimpleTerminal.cpp" />
     <ClCompile Include="stddev.cpp" />
+    <ClCompile Include="StrUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Commands.h" />
+    <ClInclude Include="Core.h" />
     <ClInclude Include="JsonLoader.h" />
     <ClInclude Include="CsvFile.h" />
     <ClInclude Include="CvData.h" />
@@ -149,6 +154,7 @@
     <ClInclude Include="Ingester.h" />
     <ClInclude Include="PrintTable.h" />
     <ClInclude Include="stddev.h" />
+    <ClInclude Include="StrUtils.h" />
     <ClInclude Include="Symbols.h" />
     <ClInclude Include="TerminalColours.h" />
     <ClInclude Include="UserConfig.h" />

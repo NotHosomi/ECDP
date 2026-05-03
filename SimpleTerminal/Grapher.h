@@ -6,7 +6,7 @@
 
 struct T_CilData;
 
-enum E_GraphType
+enum class E_GraphType
 {
 	Eis,
 	Cv,
@@ -16,7 +16,8 @@ enum E_GraphType
 class Grapher
 {
 public:
-	Grapher(std::filesystem::path outputDir);
+	Grapher(std::filesystem::path outputDir = "./plots/");
+	void SetOutputPath(std::filesystem::path outputDir);
 
 	void GraphEIS(std::string sId, T_ErrorBarD tZ, T_ErrorBarD tPhase);
 	void GraphCV(std::string sId, T_ErrorBarD tLoop);
