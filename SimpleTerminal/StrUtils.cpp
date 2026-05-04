@@ -16,7 +16,7 @@ void SU::ToUpper(std::string& sStr)
 
 void SU::RemoveLeadingChar(std::string& sStr, char cChar)
 {
-    for (size_t i = sStr.size() - 1; i < sStr.size(); --i)
+    for (int i = static_cast<int>(sStr.size() - 1); i >= 0; --i)
     {
         if (sStr[i] != cChar)
         {
@@ -28,8 +28,7 @@ void SU::RemoveLeadingChar(std::string& sStr, char cChar)
 
 void SU::RemoveTrailingChar(std::string& sStr, char cChar)
 {
-    int i = 0;
-    for (size_t i = sStr.size() - 1; i < sStr.size(); --i)
+    for (int i = static_cast<int>(sStr.size() - 1); i >= 0; --i)
     {
         if (sStr[i] != cChar)
         {

@@ -9,13 +9,14 @@ Commands::Commands(Core* pCore) :
 {
 	m_mCommands.emplace("dev", std::bind_front(&Commands::SingleDevice, this));
 	m_mCommands.emplace("multi", std::bind_front(&Commands::MultiDevice, this));
-	m_mCommands.emplace("GetOpt", std::bind_front(&Commands::GetOpt, this));
-	m_mCommands.emplace("SetOpt", std::bind_front(&Commands::SetOpt, this));
-	m_mCommands.emplace("List", std::bind_front(&Commands::ListOpt, this));
-	m_mCommands.emplace("Compare", std::bind_front(&Commands::CompareDevices, this));
-	m_mCommands.emplace("Average", std::bind_front(&Commands::AverageDevices, this));
-	m_mCommands.emplace("Set", std::bind_front(&Commands::SetDataDirectory, this));
-	m_mCommands.emplace("multi", std::bind_front(&Commands::MultiDevice, this));
+	m_mCommands.emplace("getopt", std::bind_front(&Commands::GetOpt, this));
+	m_mCommands.emplace("setopt", std::bind_front(&Commands::SetOpt, this));
+	m_mCommands.emplace("list", std::bind_front(&Commands::ListOpt, this));
+	m_mCommands.emplace("compare", std::bind_front(&Commands::CompareDevices, this));
+	m_mCommands.emplace("average", std::bind_front(&Commands::AverageDevices, this));
+	m_mCommands.emplace("set", std::bind_front(&Commands::SetDataDirectory, this));
+	m_mCommands.emplace("help", std::bind_front(&Commands::Help, this));
+
 }
 
 E_CmdErr Commands::TryCommand(std::string cmd, std::string args)
@@ -97,8 +98,50 @@ E_CmdErr Commands::MultiDevice(const std::string& vArgs)
 	return sumEc;
 }
 
+E_CmdErr Commands::CompareDevices(const std::string& vArgs)
+{
+	return E_CmdErr();
+}
+
 E_CmdErr Commands::AverageDevices(const std::string& vArgs)
 {
 
 	return E_CmdErr();
+}
+
+E_CmdErr Commands::SetDataDirectory(const std::string& vArgs)
+{
+	return E_CmdErr();
+}
+
+E_CmdErr Commands::GetOpt(const std::string& vArgs)
+{
+	return E_CmdErr();
+}
+
+E_CmdErr Commands::SetOpt(const std::string& vArgs)
+{
+	return E_CmdErr();
+}
+
+E_CmdErr Commands::ListOpt(const std::string& vArgs)
+{
+	return E_CmdErr();
+}
+
+E_CmdErr Commands::Help(const std::string& vArgs)
+{
+	std::cout << "Commands:" << std::endl;
+	std::cout << " - <deviceId>\t\tParses EIS, CV, and CIL for the specified device" << std::endl;
+	std::cout << " - Dev <Eis/Cv/Cil/All> <deviceId>\t\tParses data for the specified device" << std::endl;
+	std::cout << " - Multi <Eis/Cv/Cil/All> <deviceId> <deviceId> ...\t\tParses data for each of the devices specified" << std::endl;
+	std::cout << " - Compare <Eis/Cv/Cil/All> <deviceId> <deviceId> ...\t\tPlots multiple devices onto shared graph" << std::endl;
+	std::cout << " - Average <Eis/Cv/Cil/All> <deviceId> <deviceId> ...\t\tParses EIS, CV, and CIL for each of the devices specified" << std::endl;
+	std::cout << " - GetOpt <optionName>\t\tPrints the value of the specified option" << std::endl;
+	std::cout << " - SetOpt <optionName> <value>\t\tSets the value of the specified option" << std::endl;
+	std::cout << " - ListOpt\t\tLists all settings and their values" << std::endl;
+	std::cout << " - Help\t\tLists available commands" << std::endl;
+	std::cout << " - Quit\t\tterminates the program" << std::endl;
+
+	return E_CmdErr::None;
 }

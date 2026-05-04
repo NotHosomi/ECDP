@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 	std::string rawInput;
 	for (;;)
 	{
-		std::cout << TERM_BOLDWHITE <<"\nAwaiting user input: " << TERM_RESET << std::flush;
+		std::cout << TERM_GREEN << "\n>> " << TERM_RESET << std::flush;
 		std::cin >> rawInput;
 		std::pair<std::string, std::string> input = SU::DelimitOnce(rawInput, " ");
 		SU::ToLower(input.first);
