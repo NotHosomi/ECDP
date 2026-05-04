@@ -12,14 +12,14 @@
 T_EisElectrode ReadFile(std::filesystem::path filepath)
 {
     // get electrode Id
-    std::string name = filepath.string();
-    std::vector<std::string> vpath = CSV::delimit(name, "/");
+    std::string sName = filepath.string();
+    std::vector<std::string> vpath = CSV::delimit(sName, "/");
     assert(vpath.size() > 1 && "Use \\ instead of /");
-    name = vpath[vpath.size() - 1];
-    name = CSV::delimitOnce(name, "_").second;
-    name = CSV::delimitOnce(name, ".").first;
+    sName = vpath[vpath.size() - 1];
+    sName = CSV::delimitOnce(sName, "_").second;
+    sName = CSV::delimitOnce(sName, ".").first;
     T_EisElectrode electrode;
-    electrode.uElectrode = std::atoi(name.c_str());
+    electrode.uElectrode = std::atoi(sName.c_str());
 
     // open the file
     std::ifstream infile = CSV::openFileR(filepath.string());

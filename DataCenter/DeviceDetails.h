@@ -6,7 +6,7 @@ using BatchId = std::string;
 using DesignId = std::string;
 struct T_DeviceDetails
 {
-	DeviceId name;
+	DeviceId sName;
 	BatchId batch;
 	DesignId design;
 };

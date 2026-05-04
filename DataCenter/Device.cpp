@@ -48,7 +48,7 @@ void Device::IngestImpedences()
 
 void Device::IngestEIS()
 {
-	m_oEis.emplace(m_tDeviceDetails.name, Config::Get().RawDataPath() + "/" + m_tDeviceDetails.name + "/EIS/");
+	m_oEis.emplace(m_tDeviceDetails.sName, Config::Get().RawDataPath() + "/" + m_tDeviceDetails.sName + "/EIS/");
 }
 
 void Device::IngestCV()

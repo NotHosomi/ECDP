@@ -1,19 +1,19 @@
 #include "CsvParsing.h"
 
-std::ifstream CSV::openFileR(std::string name)
+std::ifstream CSV::openFileR(std::string sName)
 {
     std::ifstream file;
-    file.open(name, std::ios::in);
+    file.open(sName, std::ios::in);
     if (!file.is_open())
-        throw std::runtime_error("File \"" + name + "\" failed to open");
+        throw std::runtime_error("File \"" + sName + "\" failed to open");
     return file;
 }
-std::ofstream CSV::openFileW(std::string name)
+std::ofstream CSV::openFileW(std::string sName)
 {
     std::ofstream file;
-    file.open(name, std::ios::out);
+    file.open(sName, std::ios::out);
     if (!file.is_open())
-        throw std::runtime_error("File \"" + name + "\" failed to open");
+        throw std::runtime_error("File \"" + sName + "\" failed to open");
     return file;
 }
 

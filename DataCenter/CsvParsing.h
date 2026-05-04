@@ -7,8 +7,8 @@
 
 namespace CSV
 {
-	std::ifstream openFileR(std::string name);
-	std::ofstream openFileW(std::string name);
+	std::ifstream openFileR(std::string sName);
+	std::ofstream openFileW(std::string sName);
 
 	// switch to string_view if performance is poor
 

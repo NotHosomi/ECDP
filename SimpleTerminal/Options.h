@@ -1,9 +1,11 @@
 #pragma once
 #include <string>
+#include <variant>
 #include <any>
 #include <map>
 #include <type_traits>
 #include <cassert>
+#include <nlohmann\json.hpp>
 
 enum class E_OptType
 {
@@ -18,7 +20,7 @@ struct T_Opt
 	std::string sName = "";
 	std::string sDesc = "";
 	E_OptType eType = E_OptType::ErrType;
-	std::any val = 0;
+	std::variant<int, double, std::string> val = 0;
 };
 
 class Options
@@ -46,6 +48,9 @@ private:
 	template <typename T>
 	bool SetOpt(const std::string& sOptName, T val, E_OptType eType);
 
+	bool Serialise();
+	bool Deserialise();
+
 	std::map<std::string, T_Opt> m_mOptions;
 };
 
@@ -55,24 +60,29 @@ bool Options::SetOpt(const std::string& sOptName, T val, E_OptType eType)
 	if (m_mOptions.contains(sOptName) && m_mOptions.at(sOptName).eType == eType)
 	{
 		m_mOptions.at(sOptName).val = val;
+		return true;
 	}
+	return false;
 }
 
 template<typename T>
 T Options::GetOpt(const std::string& sName)
 {
 	const T_Opt opt = m_mOptions.at(opt);
-	if constexpr (std::is_same<T, int>)
+	if constexpr (std::is_same<T, int>::value)
 	{
-		return std::any_cast<int>(opt.val);
+		//return std::any_cast<int>(opt.val);
+		return std::get<int>(opt.val);
 	}
 	else if constexpr (std::is_floating_point_v<T>)
 	{
-		return static_cast<T>(std::any_cast<double>(opt.val));
+		//return static_cast<T>(std::any_cast<double>(opt.val));
+		return std::get<double>(opt.val);
 	}
-	else if constexpr (std::is_same<T, std::string>)
+	else if constexpr (std::is_same<T, std::string>::value)
 	{
-		return std::any_cast<std::string>(opt.val)
+		//return std::any_cast<std::string>(opt.val);
+		return std::get<std::string>(opt.val);
 	}
 	else
 	{

@@ -12,7 +12,7 @@ Commands::Commands(Core* pCore) :
 	m_mCommands.emplace("multi", std::bind_front(&Commands::MultiDevice, this));
 	m_mCommands.emplace("getopt", std::bind_front(&Commands::GetOpt, this));
 	m_mCommands.emplace("setopt", std::bind_front(&Commands::SetOpt, this));
-	m_mCommands.emplace("list", std::bind_front(&Commands::ListOpt, this));
+	m_mCommands.emplace("listopt", std::bind_front(&Commands::ListOpt, this));
 	m_mCommands.emplace("compare", std::bind_front(&Commands::CompareDevices, this));
 	m_mCommands.emplace("average", std::bind_front(&Commands::AverageDevices, this));
 	m_mCommands.emplace("set", std::bind_front(&Commands::SetDataDirectory, this));
@@ -41,7 +41,7 @@ E_CmdErr Commands::TryCommand(std::string cmd, std::string args)
 	E_CmdErr ec = m_mCommands.at(cmd)(args);
 	if (ec != E_CmdErr::None)
 	{
-
+		std::cout << "Command failed" << std::endl;
 	}
 	return ec;
 }
@@ -118,22 +118,19 @@ E_CmdErr Commands::SetDataDirectory(const std::string& vArgs)
 E_CmdErr Commands::GetOpt(const std::string& vArgs)
 {
 	const T_Opt& opt = Options::Get().GetOpt(vArgs);
-	if (opt.eType == E_OptType::ErrType)
-	{
-	}
 	switch (opt.eType)
 	{
 	case E_OptType::ErrType:
 		std::cout << "Unrecognised option" << std::endl;
 		return E_CmdErr::BadArgs;
 	case E_OptType::Int:
-		std::cout << "  " << std::any_cast<int>(opt.val) << std::endl;
+		std::cout << "  " << std::get<int>(opt.val) << std::endl;
 		break;
 	case E_OptType::Float:
-		std::cout << "  " << std::any_cast<float>(opt.val) << std::endl;
+		std::cout << "  " << std::get<double>(opt.val) << std::endl;
 		break;
 	case E_OptType::String:
-		std::cout << "  " << std::any_cast<std::string>(opt.val) << std::endl;
+		std::cout << "  " << std::get<std::string>(opt.val) << std::endl;
 		break;
 	}
 	return E_CmdErr::None;
@@ -175,14 +172,14 @@ E_CmdErr Commands::SetOpt(const std::string& vArgs)
 
 E_CmdErr Commands::ListOpt(const std::string& vArgs)
 {
-	for (const auto& [name, opt] : Options::Get().Data())
+	for (const auto& [sName, opt] : Options::Get().Data())
 	{
-		std::cout << " - " << name << "\t\t";
+		std::cout << " - " << sName << "\t\t";
 		switch (opt.eType)
 		{
-		case E_OptType::Int: std::cout << std::any_cast<int>(opt.val); break;
-		case E_OptType::Float: std::cout << std::any_cast<double>(opt.val); break;
-		case E_OptType::String: std::cout << std::any_cast<std::string>(opt.val); break;
+		case E_OptType::Int: std::cout << std::get<int>(opt.val); break;
+		case E_OptType::Float: std::cout << std::get<double>(opt.val); break;
+		case E_OptType::String: std::cout << std::get<std::string>(opt.val); break;
 		case E_OptType::ErrType: std::cout << "<ERR>"; break;
 		}
 		std::cout << "\t\t" << opt.sDesc << std::endl;
@@ -193,16 +190,16 @@ E_CmdErr Commands::ListOpt(const std::string& vArgs)
 E_CmdErr Commands::Help(const std::string& vArgs)
 {
 	std::cout << "Commands:" << std::endl;
-	std::cout << " - <deviceId>\t\tParses EIS, CV, and CIL for the specified device" << std::endl;
-	std::cout << " - Dev <Eis/Cv/Cil/All> <deviceId>\t\tParses data for the specified device" << std::endl;
-	std::cout << " - Multi <Eis/Cv/Cil/All> <deviceId> <deviceId> ...\t\tParses data for each of the devices specified" << std::endl;
-	std::cout << " - Compare <Eis/Cv/Cil/All> <deviceId> <deviceId> ...\t\tPlots multiple devices onto shared graph" << std::endl;
-	std::cout << " - Average <Eis/Cv/Cil/All> <deviceId> <deviceId> ...\t\tParses EIS, CV, and CIL for each of the devices specified" << std::endl;
+	std::cout << " - <deviceId>\t\t\t\t\t\tParses EIS, CV, and CIL for the specified device" << std::endl;
+	std::cout << " - Dev <Eis/Cv/Cil/All> <deviceId>\t\t\tParses data for the specified device" << std::endl;
+	std::cout << " - Multi <Eis/Cv/Cil/All> <deviceId> <deviceId> ...\tParses data for each of the devices specified" << std::endl;
+	std::cout << " - Compare <Eis/Cv/Cil/All> <deviceId> <deviceId> ...\tPlots multiple devices onto shared graph" << std::endl;
+	std::cout << " - Average <Eis/Cv/Cil/All> <deviceId> <deviceId> ...\tParses EIS, CV, and CIL for each of the devices specified" << std::endl;
 	std::cout << " - GetOpt <optionName>\t\tPrints the value of the specified option" << std::endl;
 	std::cout << " - SetOpt <optionName> <value>\t\tSets the value of the specified option" << std::endl;
-	std::cout << " - ListOpt\t\tLists all settings and their values" << std::endl;
-	std::cout << " - Help\t\tLists available commands" << std::endl;
-	std::cout << " - Quit\t\tterminates the program" << std::endl;
+	std::cout << " - ListOpt\t\t\t\t\t\tLists all settings and their values" << std::endl;
+	std::cout << " - Help\t\t\t\t\t\t\tLists available commands" << std::endl;
+	std::cout << " - Quit\t\t\t\t\t\t\tterminates the program" << std::endl;
 
 	return E_CmdErr::None;
 }
