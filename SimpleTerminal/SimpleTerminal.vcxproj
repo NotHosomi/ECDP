@@ -137,6 +137,7 @@
     <ClCompile Include="ErrorBarData.cpp" />
     <ClCompile Include="Grapher.cpp" />
     <ClCompile Include="Ingester.cpp" />
+    <ClCompile Include="Options.cpp" />
     <ClCompile Include="PrintTable.cpp" />
     <ClCompile Include="SimpleTerminal.cpp" />
     <ClCompile Include="stddev.cpp" />
@@ -152,6 +153,7 @@
     <ClInclude Include="ErrorBarData.h" />
     <ClInclude Include="Grapher.h" />
     <ClInclude Include="Ingester.h" />
+    <ClInclude Include="Options.h" />
     <ClInclude Include="PrintTable.h" />
     <ClInclude Include="stddev.h" />
     <ClInclude Include="StrUtils.h" />

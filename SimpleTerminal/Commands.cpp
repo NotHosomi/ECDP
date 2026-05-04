@@ -2,6 +2,7 @@
 #include <iostream>
 #include "Ingester.h"
 #include "StrUtils.h"
+#include "Options.h"
 
 
 Commands::Commands(Core* pCore) :
@@ -116,17 +117,77 @@ E_CmdErr Commands::SetDataDirectory(const std::string& vArgs)
 
 E_CmdErr Commands::GetOpt(const std::string& vArgs)
 {
-	return E_CmdErr();
+	const T_Opt& opt = Options::Get().GetOpt(vArgs);
+	if (opt.eType == E_OptType::ErrType)
+	{
+	}
+	switch (opt.eType)
+	{
+	case E_OptType::ErrType:
+		std::cout << "Unrecognised option" << std::endl;
+		return E_CmdErr::BadArgs;
+	case E_OptType::Int:
+		std::cout << "  " << std::any_cast<int>(opt.val) << std::endl;
+		break;
+	case E_OptType::Float:
+		std::cout << "  " << std::any_cast<float>(opt.val) << std::endl;
+		break;
+	case E_OptType::String:
+		std::cout << "  " << std::any_cast<std::string>(opt.val) << std::endl;
+		break;
+	}
+	return E_CmdErr::None;
 }
 
 E_CmdErr Commands::SetOpt(const std::string& vArgs)
 {
-	return E_CmdErr();
+	auto pair = SU::DelimitOnce(vArgs, " ");
+	if (pair.first == "" || pair.second == "")
+	{
+		std::cout << "Invalid parameters" << std::endl;
+		return E_CmdErr::BadArgs;
+	}
+	E_OptType eType = Options::Get().GetOpt(pair.first).eType;
+	try
+	{
+		switch (eType)
+		{
+		case E_OptType::ErrType:
+			std::cout << "Unrecognised option" << std::endl;
+			return E_CmdErr::BadArgs;
+		case E_OptType::Int:
+			Options::Get().SetOpt(pair.first, std::stoi(pair.second));
+			break;
+		case E_OptType::Float:
+			Options::Get().SetOpt(pair.first, std::stod(pair.second));
+			break;
+		case E_OptType::String:
+			Options::Get().SetOpt(pair.first, pair.second);
+			break;
+		}
+	}
+	catch (std::invalid_argument e)
+	{
+		std::cout << "Invalid option value" << std::endl;
+	}
+	return E_CmdErr::None;
 }
 
 E_CmdErr Commands::ListOpt(const std::string& vArgs)
 {
-	return E_CmdErr();
+	for (const auto& [name, opt] : Options::Get().Data())
+	{
+		std::cout << " - " << name << "\t\t";
+		switch (opt.eType)
+		{
+		case E_OptType::Int: std::cout << std::any_cast<int>(opt.val); break;
+		case E_OptType::Float: std::cout << std::any_cast<double>(opt.val); break;
+		case E_OptType::String: std::cout << std::any_cast<std::string>(opt.val); break;
+		case E_OptType::ErrType: std::cout << "<ERR>"; break;
+		}
+		std::cout << "\t\t" << opt.sDesc << std::endl;
+	}
+	return E_CmdErr::None;
 }
 
 E_CmdErr Commands::Help(const std::string& vArgs)
