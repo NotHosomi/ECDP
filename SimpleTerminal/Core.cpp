@@ -105,6 +105,7 @@ void Core::Cv(const std::string sDeviceId, const Ingester& ingest, const T_CvCon
 		CscTable.Print(TERM_BOLDBLUE);
 		std::cout << "  Average: " << (sum / mCv.size()) << std::endl;
 
+		// Plot each CV
 		if (tConfig.plotEachElectrode)
 		{
 			for (const auto& [key, data] : mCv)
@@ -114,6 +115,7 @@ void Core::Cv(const std::string sDeviceId, const Ingester& ingest, const T_CvCon
 		}
 	}
 
+	// Plot aggregate CV
 	if (tConfig.plotCv)
 	{
 		T_ErrorBarD tCvPlot = ingest.GetCvPlot(cvExcludes);
@@ -126,6 +128,10 @@ void Core::Cil(const std::string sDeviceId, const Ingester& ingest, const T_CilC
 	if (tConfig.calcCil)
 	{
 		T_CilData cils = ingest.CalculateCilVals();
+		if (cils.vPulseWidths.size() == 0)
+		{
+			return;
+		}
 		std::cout << "\nCIL values" << std::endl;
 		PrintCilVals(cils.vPulseWidths, cils.mCilVals, cils.vCilStats);
 		std::cout << "\nNormalised CIL values" << std::endl;

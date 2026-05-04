@@ -370,10 +370,11 @@ T_ErrorBarD Ingester::GetCvPlot(const std::vector<std::string>& vExcludes) const
 	std::vector<std::map<T_Voltage, double>> grossCv;
 	for (const auto& csv : readFiles(m_vCvPaths))
 	{
-		if (std::find(vExcludes.begin(), vExcludes.end(), csv.GetFilename()) == vExcludes.end())
-		{
-			continue;
-		}
+		//if (std::find(vExcludes.begin(), vExcludes.end(), csv.GetFilename()) == vExcludes.end())
+		//{
+		//	std::cout << "Skipping " << csv.GetFilename() << std::endl;
+		//	continue;
+		//}
 		T_CvData tData = parseCvFile(csv);
 		if (tData.vLoops.size() == 0) { continue; }
 
@@ -414,10 +415,11 @@ T_ErrorBarD Ingester::GetCvPlot(const std::vector<std::string>& vExcludes) const
 			}
 		}
 	}
-	if (grossCv.size() == 0)
-	{
-		return {};
-	}
+	//if (grossCv.size() == 0)
+	//{
+	//	std::cout << "Not enough valid CV data to plot" << std::endl;
+	//	return {};
+	//}
 	
 	// average across files, with stddev
 	std::map<T_Voltage, T_Stats> stats = stddev(grossCv);
