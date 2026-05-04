@@ -13,7 +13,8 @@ enum E_CmdErr
 	TooManyArgs,
 	InvalidArgTypes,
 	BadArgs,
-	NoData
+	NoData,
+	Other
 };
 
 class Core
@@ -30,7 +31,6 @@ public:
 
 private:
 	void PrintCilVals(std::vector<int> vPulseWidths, std::map<int, std::vector<float>> mVals, std::vector<T_Stats> vStats);
-
 
 	std::filesystem::path m_DataPath;
 	Grapher m_Grapher;

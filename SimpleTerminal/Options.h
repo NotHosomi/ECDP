@@ -39,7 +39,7 @@ public:
 	bool SetOpt(const std::string& sOptName, double val);
 	bool SetOpt(const std::string& sOptName, const std::string& val);
 
-	void SaveOpts();
+	bool SaveOpts();
 
 	const std::map<std::string, T_Opt>& Data();
 

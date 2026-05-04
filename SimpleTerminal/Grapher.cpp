@@ -76,7 +76,7 @@ void Grapher::GraphCV(std::string sId, T_ErrorBarD tLoop)
 {
 	if (tLoop.x.size() == 0)
 	{
-		std::cout << "Not enough CV data to plot" << std::flush;
+		std::cout << "Cannot render CV plot" << std::endl;
 		return;
 	}
 	using namespace matplot;

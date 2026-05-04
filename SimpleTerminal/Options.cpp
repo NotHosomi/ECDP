@@ -48,14 +48,15 @@ bool Options::SetOpt(const std::string& sOptName, const std::string& val)
 	return SetOpt(sOptName, val, E_OptType::String);
 }
 
-void Options::SaveOpts()
+bool Options::SaveOpts()
 {
 	if (!Serialise())
 	{
 		std::cout << "Failed to save options" << std::endl;
-		return;
+		return false;
 	}
 	std::cout << "Saved" << std::endl;
+	return true;
 }
 
 const std::map<std::string, T_Opt>& Options::Data()

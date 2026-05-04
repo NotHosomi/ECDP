@@ -31,7 +31,8 @@ private:
 	E_CmdErr SetDataDirectory(const std::string& vArgs);
 	E_CmdErr GetOpt(const std::string& vArgs);
 	E_CmdErr SetOpt(const std::string& vArgs);
-	E_CmdErr ListOpt(const std::string& vArgs);
+	E_CmdErr ListOpts(const std::string& vArgs);
+	E_CmdErr SaveOpts(const std::string& vArgs);
 	E_CmdErr Help(const std::string& vArgs);
 
 	std::map<std::string, std::function<E_CmdErr(const std::string&)>> m_mCommands;

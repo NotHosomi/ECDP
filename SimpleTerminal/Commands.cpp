@@ -12,7 +12,8 @@ Commands::Commands(Core* pCore) :
 	m_mCommands.emplace("multi", std::bind_front(&Commands::MultiDevice, this));
 	m_mCommands.emplace("getopt", std::bind_front(&Commands::GetOpt, this));
 	m_mCommands.emplace("setopt", std::bind_front(&Commands::SetOpt, this));
-	m_mCommands.emplace("listopt", std::bind_front(&Commands::ListOpt, this));
+	m_mCommands.emplace("listopts", std::bind_front(&Commands::ListOpts, this));
+	m_mCommands.emplace("saveopts", std::bind_front(&Commands::SaveOpts, this));
 	m_mCommands.emplace("compare", std::bind_front(&Commands::CompareDevices, this));
 	m_mCommands.emplace("average", std::bind_front(&Commands::AverageDevices, this));
 	m_mCommands.emplace("set", std::bind_front(&Commands::SetDataDirectory, this));
@@ -112,7 +113,15 @@ E_CmdErr Commands::AverageDevices(const std::string& vArgs)
 
 E_CmdErr Commands::SetDataDirectory(const std::string& vArgs)
 {
-	return E_CmdErr();
+	if (!std::filesystem::exists(vArgs))
+	{
+		std::cout << "Could not find the specified directory. Aborting" << std::endl;
+		return E_CmdErr::BadArgs;
+	}
+
+	m_pCore->UserConfig().dataDirectory = vArgs;
+	std::cout << "data directory set to \"" << vArgs << "\"" << std::endl;
+	return E_CmdErr::None;
 }
 
 E_CmdErr Commands::GetOpt(const std::string& vArgs)
@@ -170,7 +179,7 @@ E_CmdErr Commands::SetOpt(const std::string& vArgs)
 	return E_CmdErr::None;
 }
 
-E_CmdErr Commands::ListOpt(const std::string& vArgs)
+E_CmdErr Commands::ListOpts(const std::string& vArgs)
 {
 	for (const auto& [sName, opt] : Options::Get().Data())
 	{
@@ -187,6 +196,11 @@ E_CmdErr Commands::ListOpt(const std::string& vArgs)
 	return E_CmdErr::None;
 }
 
+E_CmdErr Commands::SaveOpts(const std::string& vArgs)
+{
+	return Options::Get().SaveOpts() ? E_CmdErr::None : E_CmdErr::Other;
+}
+
 E_CmdErr Commands::Help(const std::string& vArgs)
 {
 	std::cout << "Commands:" << std::endl;
@@ -197,7 +211,8 @@ E_CmdErr Commands::Help(const std::string& vArgs)
 	std::cout << " - Average <Eis/Cv/Cil/All> <deviceId> <deviceId> ...\tParses EIS, CV, and CIL for each of the devices specified" << std::endl;
 	std::cout << " - GetOpt <optionName>\t\tPrints the value of the specified option" << std::endl;
 	std::cout << " - SetOpt <optionName> <value>\t\tSets the value of the specified option" << std::endl;
-	std::cout << " - ListOpt\t\t\t\t\t\tLists all settings and their values" << std::endl;
+	std::cout << " - ListOpts\t\t\t\t\t\tLists all settings and their values" << std::endl;
+	std::cout << " - SaveOpts\t\t\t\t\t\tSaves your current options for next time" << std::endl;
 	std::cout << " - Help\t\t\t\t\t\t\tLists available commands" << std::endl;
 	std::cout << " - Quit\t\t\t\t\t\t\tterminates the program" << std::endl;
 
