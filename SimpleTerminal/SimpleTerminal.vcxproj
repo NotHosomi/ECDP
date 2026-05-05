@@ -130,6 +130,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Archive.cpp" />
     <ClCompile Include="CilData.h" />
     <ClCompile Include="Commands.cpp" />
     <ClCompile Include="Core.cpp" />
@@ -144,8 +145,10 @@
     <ClCompile Include="StrUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Archive.h" />
     <ClInclude Include="Commands.h" />
     <ClInclude Include="Core.h" />
+    <ClInclude Include="EisData.h" />
     <ClInclude Include="JsonLoader.h" />
     <ClInclude Include="CsvFile.h" />
     <ClInclude Include="CvData.h" />

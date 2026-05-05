@@ -5,6 +5,7 @@
 #include <utility>
 #include "ErrorBarData.h"
 #include "CsvFile.h"
+#include "EisData.h"
 #include "CvData.h"
 #include "CilData.h"
 #include "DeviceInfo.h"
@@ -15,8 +16,8 @@ class Ingester
 public:
 	Ingester(std::filesystem::path deviceDirectory);
 
-	std::map<std::string, std::vector<double>> GetEisKeyvals(const std::vector<std::string>& vKeyVals) const;
-	std::map<std::string, T_CvData> CalculateCscVals() const;
+	T_EisData ParseEis(const std::vector<std::string>& vKeyVals) const;
+	T_CvData CalculateCscVals() const;
 	T_CilData CalculateCilVals() const;
 
 	std::array<T_ErrorBarD, 2> GetEisPlot() const;
@@ -32,7 +33,7 @@ public:
 
 private:
 	std::vector<CsvFile> readFiles(const std::vector<std::filesystem::path>& fileaddrs) const;
-	T_CvData parseCvFile(const CsvFile& csv) const;
+	T_CvElectrodeData parseCvFile(const CsvFile& csv) const;
 	double hysteresisArea(const std::vector<double>& x, const std::vector<double>& y) const;
 	std::vector<std::filesystem::path> m_vEisPaths;
 	std::vector<std::filesystem::path> m_vCvPaths;

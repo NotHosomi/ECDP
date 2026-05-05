@@ -4,6 +4,7 @@
 #include "stddev.h"
 
 class Ingester;
+struct T_CvData;
 
 enum E_CmdErr
 {
@@ -27,9 +28,11 @@ public:
 	void Cv(const std::string sDeviceId, const Ingester& ingest, const T_CvConfig& tUserConfig);
 	void Cil(const std::string sDeviceId, const Ingester& ingest, const T_CilConfig& tUserConfig);
 
+
 	T_UserConfig& UserConfig();
 
 private:
+	void PrintCscVals(const T_CvData& tCvData);
 	void PrintCilVals(std::vector<int> vPulseWidths, std::map<int, std::vector<float>> mVals, std::vector<T_Stats> vStats);
 
 	std::filesystem::path m_DataPath;

@@ -1,5 +1,6 @@
 #include <vector>
 #include <map>
+#include <nlohmann\json.hpp>
 #include "stddev.h"
 
 using ElectrodeNum = int;
@@ -12,4 +13,5 @@ struct T_CilData
 	std::map<ElectrodeNum, std::vector<float>> mCilValsNormalised;
 	std::vector<T_Stats> vCilStats;
 	std::vector<T_Stats> vCilStatsNormalised;
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE(T_CilData, vPulseWidths, mCilVals, mCilValsNormalised, vCilStats, vCilStatsNormalised);
 };

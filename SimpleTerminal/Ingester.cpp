@@ -69,7 +69,7 @@ Ingester::Ingester(std::filesystem::path deviceDirectory)
 			std::cin.clear();
 			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 		}
-		std::cout << "Electrode count (microns): ";
+		std::cout << "Electrode count: ";
 		while (!(std::cin >> m_tDeviceInfo.electrodeCount))
 		{
 			std::cin.clear();
@@ -98,11 +98,11 @@ std::vector<CsvFile> Ingester::readFiles(const std::vector<std::filesystem::path
 	return csvList;
 }
 
-T_CvData Ingester::parseCvFile(const CsvFile& csv) const
+T_CvElectrodeData Ingester::parseCvFile(const CsvFile& csv) const
 {
 	try
 	{
-		T_CvData tOutput;
+		T_CvElectrodeData tOutput;
 		std::vector<std::string> scanStrs = csv.GetCol("Scan");
 		std::vector<std::string> voltageStrs = csv.GetCol("WE(1).Potential (V)");
 		std::vector<std::string> currentStrs = csv.GetCol("WE(1).Current (A)");
@@ -142,55 +142,66 @@ double Ingester::hysteresisArea(const std::vector<double>& x, const std::vector<
 	return std::abs(area) / 2.0;
 }
 
-std::map<std::string, std::vector<double>> Ingester::GetEisKeyvals(const std::vector<std::string>& vKeyVals) const
+T_EisData Ingester::ParseEis(const std::vector<std::string>& vKeyVals) const
 {
-	std::map<std::string, std::vector<double>> out;
+	T_EisData out;
+	out.vFrequencies = vKeyVals;
+
 	std::vector<CsvFile> csvList = readFiles(m_vEisPaths);
+	if (csvList.size() == 0)
+	{
+		std::cout << "No EIS files to read" << std::endl;
+		return {};
+	}
+
 	std::vector<std::vector<double>> allKeyvals(vKeyVals.size(), {});
 	for (const auto& entry : csvList)
 	{
+		// grab raw data
+		out.mRaw.insert({ entry.GetFilename(), {} });
+		auto& raw = out.mRaw.at(entry.GetFilename());
+		raw.vFrequencies = entry.GetColAsDouble("Frequency (Hz)");
+		raw.vImpedances = entry.GetColAsDouble("Z (\xCE\xA9)");
+		raw.vPhases = entry.GetColAsDouble("-Phase (\xC2\xB0)");
+
+		// grab key impedance values
 		std::vector<double> keyvals(vKeyVals.size(), -1);
-		int index = 0;
-		for (; index < entry.GetCol(0).size(); ++index)
+		for (int row; row < entry.GetCol(0).size(); ++row)
 		{
 			for (int i = 0; i < vKeyVals.size(); ++i)
 			{
-				if (entry.GetCol("Frequency (Hz)")[index] == vKeyVals[i])
+				if (entry.GetCol("Frequency (Hz)")[row] == vKeyVals[i])
 				{
-					double val = std::atof(entry.GetCol("Z (\xCE\xA9)")[index].c_str());
+					double val = std::atof(entry.GetCol("Z (\xCE\xA9)")[row].c_str());
 					keyvals[i] = val;
 					allKeyvals[i].push_back(val);
 				}
 			}
 		}
-		out.insert({ entry.GetFilename(), keyvals });
+		out.mImpedances.insert({ entry.GetFilename(), keyvals });
 	}
 	std::vector<T_Stats> stats(vKeyVals.size(), {});
-	std::vector<double> vAvrgs(vKeyVals.size(), 0);
-	std::vector<double> vStddev(vKeyVals.size(), 0);
 	for (int i = 0; i < allKeyvals.size(); ++i)
 	{
 		T_Stats stats = stddev(allKeyvals[i]);
-		vAvrgs[i] = stats.mean;
-		vStddev[i] = stats.stddev;
+		out.vAverages.push_back(stats.mean);
+		out.vStddev.push_back(stats.stddev);
 	}
-	out.insert({ "{AVRG}", vAvrgs });
-	out.insert({ "{STDDEV}", vStddev });
 	return out;
 }
 
-// todo: fix csc nan
-std::map<std::string, T_CvData> Ingester::CalculateCscVals() const
+T_CvData Ingester::CalculateCscVals() const
 {
-	std::map<std::string, T_CvData> mOutput;
+	T_CvData tOutput;
+	std::map<std::string, T_CvElectrodeData> mOutput;
 	std::cout << "Reading CV..." << std::endl;
 	std::vector<CsvFile> csvList = readFiles(m_vCvPaths);
 
 	std::cout << "Calculating CSCs..." << std::endl;
 	for(auto entry : csvList)
 	{
-		T_CvData tOutput = parseCvFile(entry);
-		if (tOutput.vLoops.size() == 0) { continue; }
+		T_CvElectrodeData tElecData = parseCvFile(entry);
+		if (tElecData.vLoops.size() == 0) { continue; }
 
 		std::vector<int> vLoopOffsets;
 		vLoopOffsets.push_back(0);
@@ -205,11 +216,11 @@ std::map<std::string, T_CvData> Ingester::CalculateCscVals() const
 		}
 
 		double area = 0;
-		for (int i = 1; i < tOutput.vLoops.size(); ++i)
+		for (int i = 1; i < tElecData.vLoops.size(); ++i)
 		{
-			area += hysteresisArea(tOutput.vLoops[i].vVoltages, tOutput.vLoops[i].vCurrents);
+			area += hysteresisArea(tElecData.vLoops[i].vVoltages, tElecData.vLoops[i].vCurrents);
 		}
-		area /= tOutput.vLoops.size();
+		area /= tElecData.vLoops.size();
 
 		// convert area to CSC
 		int windowSize = static_cast<int>((vLoopOffsets[2] - vLoopOffsets[1]) * 0.1f);
@@ -220,10 +231,20 @@ std::map<std::string, T_CvData> Ingester::CalculateCscVals() const
 		double voltDelta = std::atof(entry.GetCol("WE(1).Potential (V)")[t1index].c_str())
 						 - std::atof(entry.GetCol("WE(1).Potential (V)")[t0index].c_str());
 		double scanRate = std::abs(voltDelta / timeDelta);
-		tOutput.dCsc = (area / (2 * scanRate * GetElectrodeArea_cm2())) * 1000; // C -> mC
-		mOutput.insert({ entry.GetFilename(), tOutput });
+		tElecData.dCsc = (area / (2 * scanRate)) * 1000; // C -> mC
+		tElecData.dCscNorm = tElecData.dCsc / GetElectrodeArea_cm2(); // C -> mC
+		tOutput.mElectrodes.insert({ entry.GetFilename(), tElecData });
 	}
-	return mOutput;
+	std::vector<double> vCscs;
+	std::vector<double> vCscNorms;
+	for (const auto& [key, val] : tOutput.mElectrodes)
+	{
+		vCscs.push_back(val.dCsc);
+		vCscNorms.push_back(val.dCscNorm);
+	}
+	tOutput.tCsc = stddev(vCscs);
+	tOutput.tCscNorm = stddev(vCscNorms);
+	return tOutput;
 }
 
 T_CilData Ingester::CalculateCilVals() const
@@ -302,7 +323,7 @@ std::array<T_ErrorBarD, 2> Ingester::GetEisPlot() const
 		{
 			if (data.GetCol("Frequency (Hz)")[i] == "1000")
 			{
-				return std::atof(data.GetCol("Z (\xCE\xA9)")[i].c_str()) >= 20000;
+				return std::atof(data.GetCol("Z (\xCE\xA9)")[i].c_str()) >= 20000; // todo: use opts or user config here
 			}
 		}
 		return true;
@@ -375,7 +396,7 @@ T_ErrorBarD Ingester::GetCvPlot(const std::vector<std::string>& vExcludes) const
 		//	std::cout << "Skipping " << csv.GetFilename() << std::endl;
 		//	continue;
 		//}
-		T_CvData tData = parseCvFile(csv);
+		T_CvElectrodeData tData = parseCvFile(csv);
 		if (tData.vLoops.size() == 0) { continue; }
 
 		// average per loop

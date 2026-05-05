@@ -1,5 +1,6 @@
 #include "Core.h"
 #include <iostream>
+#include <algorithm>
 #include "Ingester.h"
 #include "TerminalColours.h"
 #include "PrintTable.h"
@@ -46,7 +47,7 @@ void Core::Eis(const std::string sDeviceId, const Ingester& ingest, const T_EisC
 
 	// EIS
 	std::cout << "\nFetching EIS values..." << std::endl;
-	std::map<std::string, std::vector<double>> ImpedanceKeyvals = ingest.GetEisKeyvals(tConfig.keyVals);
+	T_EisData tEisData = ingest.ParseEis(tConfig.keyVals);
 
 	// EIS Table
 	std::vector<std::string> headers;
@@ -57,17 +58,24 @@ void Core::Eis(const std::string sDeviceId, const Ingester& ingest, const T_EisC
 	}
 	PrintTable EisTable(headers);
 	std::vector<std::string> eisExclusionList;
-	int validCount = 0;
-	for (const auto& iter : ImpedanceKeyvals)
+	std::vector<std::string> newRow;
+	std::string colour;
+	for (const auto& iter : tEisData.mImpedances)
 	{
-		std::string colour = TERM_RED;
-		if (iter.second[1] <= tConfig.maxValidImpedance)
+		colour = TERM_GREEN;
+		if (std::any_of(iter.second.begin(), iter.second.end(), [tConfig](double val) { return val > tConfig.maxValidImpedance; }))
 		{
-			validCount += 1;
-			colour = TERM_GREEN;
+			colour = TERM_RED;
 		}
-		EisTable.AddRow({ iter.first, SU::RoundToStr(iter.second[0]), SU::RoundToStr(iter.second[1]), SU::RoundToStr(iter.second[2]) }, colour);
+		EisTable.AddRow(iter.first, iter.second, colour);
 	}
+	colour = TERM_GREEN;
+	if (std::any_of(tEisData.vAverages.begin(), tEisData.vAverages.end(), [tConfig](double val) { return val > tConfig.maxValidImpedance; }))
+	{
+		colour = TERM_RED;
+	}
+	EisTable.AddRow("AVRG", tEisData.vAverages);
+	EisTable.AddRow("STDDEV", tEisData.vStddev);
 	EisTable.Print(TERM_BOLDRED);
 
 
@@ -75,9 +83,9 @@ void Core::Eis(const std::string sDeviceId, const Ingester& ingest, const T_EisC
 	if (tConfig.plotEis)
 	{
 		std::array<T_ErrorBarD, 2> EisData = ingest.GetEisPlot();
-		m_Grapher.GraphEIS(sDeviceId, EisData[0], EisData[1]);
+		m_Grapher.GraphDeviceEIS(sDeviceId, EisData[0], EisData[1]);
 	}
-	if (tConfig.plotEis)
+	if (tConfig.plotEachElectrode)
 	{
 		// todo: add this to the grapher
 	}
@@ -85,41 +93,26 @@ void Core::Eis(const std::string sDeviceId, const Ingester& ingest, const T_EisC
 
 void Core::Cv(const std::string sDeviceId, const Ingester& ingest, const T_CvConfig& tConfig)
 {
-	std::vector<std::string> cvExcludes;
-	if (tConfig.calcCsc)
-	{
-		std::map<std::string, T_CvData> mCv = ingest.CalculateCscVals();
-		PrintTable CscTable({ "Electrode", "CSC (mC/cm^2)" });
-		double sum = 0.0;
-		for (const auto& iter : mCv)
-		{
-			std::string colour = "";
-			if (iter.second.dCsc < 1 || iter.second.dCsc != iter.second.dCsc)
-			{
-				colour = TERM_RED;
-				cvExcludes.push_back(iter.first);
-			}
-			CscTable.AddRow({ iter.first, std::to_string(iter.second.dCsc) }, colour);
-			sum += iter.second.dCsc;
-		}
-		CscTable.Print(TERM_BOLDBLUE);
-		std::cout << "  Average: " << (sum / mCv.size()) << std::endl;
+	if (!tConfig.calcCsc) { return; }
 
-		// Plot each CV
-		if (tConfig.plotEachElectrode)
+	std::vector<std::string> cvExcludes;
+	T_CvData tCv = ingest.CalculateCscVals();
+	PrintCscVals(tCv);
+
+	// Plot each CV
+	if (tConfig.plotEachElectrode)
+	{
+		for (const auto& [key, data] : tCv.mElectrodes)
 		{
-			for (const auto& [key, data] : mCv)
-			{
-				m_Grapher.GraphCV(sDeviceId, key, data);
-			}
+			m_Grapher.GraphElectrodeCV(sDeviceId, key, data);
 		}
 	}
-
+	
 	// Plot aggregate CV
 	if (tConfig.plotCv)
 	{
 		T_ErrorBarD tCvPlot = ingest.GetCvPlot(cvExcludes);
-		m_Grapher.GraphCV(sDeviceId, tCvPlot);
+		m_Grapher.GraphDeviceCV(sDeviceId, tCvPlot);
 	}
 }
 
@@ -140,7 +133,7 @@ void Core::Cil(const std::string sDeviceId, const Ingester& ingest, const T_CilC
 		if (tConfig.plotCil)
 		{
 			// Plot CIL values
-			m_Grapher.GraphCIL(sDeviceId, cils);
+			m_Grapher.GraphDeviceCIL(sDeviceId, cils);
 		}
 		if (tConfig.plotEachElectrode)
 		{
@@ -152,6 +145,25 @@ void Core::Cil(const std::string sDeviceId, const Ingester& ingest, const T_CilC
 T_UserConfig& Core::UserConfig()
 {
 	return m_tUserConfig;
+}
+
+void Core::PrintCscVals(const T_CvData& tCvData)
+{
+	PrintTable CscTable({ "Electrode", "CSC (mC)", "Normalised (mC/cm^2)" });
+	double sum = 0.0;
+	for (const auto& iter : tCvData.mElectrodes)
+	{
+		std::string colour = "";
+		if (iter.second.dCscNorm < 1 || iter.second.dCscNorm != iter.second.dCscNorm)
+		{
+			colour = TERM_RED;
+		}
+		CscTable.AddRow({ iter.first, std::to_string(iter.second.dCscNorm) }, colour);
+		sum += iter.second.dCscNorm;
+	}
+	CscTable.AddRow("AVRG", std::vector<double>({ tCvData.tCsc.mean, tCvData.tCscNorm.mean }));
+	CscTable.AddRow("STDDEV", std::vector<double>({ tCvData.tCsc.stddev, tCvData.tCscNorm.stddev }));
+	CscTable.Print(TERM_BOLDBLUE);
 }
 
 void Core::PrintCilVals(std::vector<int> vPulseWidths, std::map<int, std::vector<float>> mVals, std::vector<T_Stats> vStats)

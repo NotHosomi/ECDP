@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <map>
+#include <nlohmann/json.hpp>
 
 // sample StdDv
 //  (sumsSq[key] - (sum * sum / n)) / (n - 1);
@@ -13,6 +14,7 @@ struct T_Stats
     double sum = 0.0;
     double mean = 0.0;
     double stddev = 0.0;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(T_Stats, samples, sum, mean, stddev);
 };
 
 template<typename T>

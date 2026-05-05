@@ -2,7 +2,10 @@
 #include "Grapher.h"
 #include <algorithm>
 #include <matplot/matplot.h>
+#include "CvData.h"
 #include "CilData.h"
+#include "Ingester.h"
+#include "CsvFile.h"
 
 Grapher::Grapher(std::filesystem::path outputDir)
 {
@@ -17,7 +20,7 @@ void Grapher::SetOutputPath(std::filesystem::path outputDir)
 	}
 }
 
-void Grapher::GraphEIS(std::string sId, T_ErrorBarD tZ, T_ErrorBarD tPhase)
+void Grapher::GraphDeviceEIS(const std::string& sId, const T_ErrorBarD& tZ, const T_ErrorBarD& tPhase)
 {
 	std::cout << "Rendering EIS plot... " << std::flush;
 	using namespace matplot;
@@ -72,7 +75,18 @@ void Grapher::GraphEIS(std::string sId, T_ErrorBarD tZ, T_ErrorBarD tPhase)
 	std::cout << "Done\n" << std::endl;
 }
 
-void Grapher::GraphCV(std::string sId, T_ErrorBarD tLoop)
+void Grapher::GraphElectrodeEIS(const std::string& sId, const Ingester& ingest)
+{
+}
+
+void Grapher::GraphElectrodeEIS(const std::string& sId, const Ingester& ingest)
+{
+	std::vector<CsvFile> vCsv = ingest.;
+	auto fig = matplot::figure(true);
+	fit.plot()
+}
+
+void Grapher::GraphDeviceCV(const std::string& sId, T_ErrorBarD tLoop)
 {
 	if (tLoop.x.size() == 0)
 	{
@@ -107,7 +121,7 @@ void Grapher::GraphCV(std::string sId, T_ErrorBarD tLoop)
 	std::cout << "Done\n" << std::endl;
 }
 
-void Grapher::GraphCV(std::string sId, std::string filename, T_CvData tElectrode)
+void Grapher::GraphElectrodeCV(const std::string& sId, const std::string& filename, T_CvElectrodeData tElectrode)
 {
 	std::cout << "Rendering CV plot (" << filename << ")... " << std::flush;
 
@@ -135,7 +149,7 @@ void Grapher::GraphCV(std::string sId, std::string filename, T_CvData tElectrode
 	std::cout << "Done" << std::endl;
 }
 
-void Grapher::GraphCIL(std::string sId, const T_CilData& data)
+void Grapher::GraphDeviceCIL(const std::string& sId, const T_CilData& data)
 {
 	// todo graph CIL
 	if (data.vPulseWidths.size() <= 1)
@@ -149,7 +163,7 @@ void Grapher::GraphCIL(std::string sId, const T_CilData& data)
 
 }
 
-std::string Grapher::GetGraphPath(std::string sId, E_GraphType eType)
+std::string Grapher::GetGraphPath(const std::string& sId, E_GraphType eType)
 {
 	std::string sFilename;
 	switch (eType)

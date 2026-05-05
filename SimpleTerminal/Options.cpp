@@ -15,6 +15,13 @@ Options::Options()
 	AddOpt({ "demoOpt", "This is an example option", E_OptType::Int, 1 });
 	AddOpt({ "demoOpt2", "This is an example option", E_OptType::Float, 0.5 });
 	AddOpt({ "demoOpt3", "This is an example option", E_OptType::String, "Demo" });
+
+	AddOpt({ "eis-plot-avrg", "Plot per-device EIS graph", E_OptType::Int, 1 });
+	AddOpt({ "eis-plot-each", "Plot per-electrode EIS graph", E_OptType::Int, 0 });
+	AddOpt({ "cv-plot-avrg", "Plot per-device CV loop", E_OptType::Int, 1 });
+	AddOpt({ "cv-plot-each", "Plot per-electrode CV loops", E_OptType::Int, 0 });
+	AddOpt({ "cil-plot-avrg", "Plot per-device CILs", E_OptType::Int, 1 });
+	AddOpt({ "cil-plot-each", "Plot per-electrode CILs", E_OptType::Int, 0 });
 }
 
 Options& Options::Get()

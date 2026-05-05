@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <iostream>
 #include "TerminalColours.h"
+#include "StrUtils.h"
 
 PrintTable::PrintTable(const std::vector<std::string>& vHeaders) :
 	m_vHeaders(vHeaders)
