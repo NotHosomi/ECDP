@@ -49,7 +49,19 @@ E_CmdErr Commands::TryCommand(std::string cmd, std::string args)
 
 E_CmdErr Commands::SingleDevice(const std::string& args)
 {
-	std::string deviceId = args;
+	std::pair<std::string, std::string> split = SU::DelimitOnce(args, " ");
+	std::string mode;
+	std::string deviceId;
+	if (split.second == "")
+	{
+		deviceId = split.first;
+		mode = "all";
+	}
+	else
+	{
+		deviceId = split.second;
+		mode = split.first;
+	}
 	while (deviceId == "")
 	{
 		std::cout << "Input device ID: ";
@@ -57,23 +69,25 @@ E_CmdErr Commands::SingleDevice(const std::string& args)
 		std::cin.clear();
 	}
 
-	std::filesystem::path devicePath = m_pCore->UserConfig().dataDirectory + "/" + deviceId;
-	if (!std::filesystem::exists(devicePath))
+	int eModes;
+	if (mode == "all")
 	{
-		std::cout << "Could not find " << deviceId << std::endl;
-		deviceId = "";
-		return E_CmdErr::BadArgs;
+		eModes |= (Core::kEis | Core::kCv | Core::kCil);
 	}
+	else if (mode == "eis")
+	{
+		eModes = Core::kEis;
+	}
+	else if (mode == "cv")
+	{
+		eModes = Core::kCv;
+	}
+	else if (mode == "cil")
+	{
+		eModes = Core::kCil;
+	}
+	m_pCore->Run(deviceId, static_cast<Core::E_DataTypes>(eModes));
 
-	std::cout << "\nReading device " << deviceId << "\n-------------------" << std::endl;
-	Ingester ingest(devicePath);
-
-	m_pCore->Eis(deviceId, ingest, m_pCore->UserConfig().eis);
-	m_pCore->Cv(deviceId, ingest, m_pCore->UserConfig().cv);
-	m_pCore->Cil(deviceId, ingest, m_pCore->UserConfig().cil);
-
-	std::cout << "\nFinished " << deviceId << "\n" << std::endl;
-	deviceId = "";
 	return E_CmdErr::None;
 }
 

@@ -16,6 +16,8 @@ Options::Options()
 	AddOpt({ "demoOpt2", "This is an example option", E_OptType::Float, 0.5 });
 	AddOpt({ "demoOpt3", "This is an example option", E_OptType::String, "Demo" });
 
+	AddOpt({ "force-replot", "Always generate and render a plot, even if its already exists", E_OptType::Int, 0 });
+
 	AddOpt({ "eis-plot-avrg", "Plot per-device EIS graph", E_OptType::Int, 1 });
 	AddOpt({ "eis-plot-each", "Plot per-electrode EIS graph", E_OptType::Int, 0 });
 	AddOpt({ "cv-plot-avrg", "Plot per-device CV loop", E_OptType::Int, 1 });

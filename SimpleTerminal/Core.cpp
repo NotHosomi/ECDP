@@ -41,10 +41,38 @@ Core::Core()
 	m_Grapher.SetOutputPath(m_tUserConfig.plotDirectory);
 }
 
+bool Core::Run(const std::string sDeviceId, E_DataTypes eModes)
+{
+	std::filesystem::path devicePath = UserConfig().dataDirectory + "/" + sDeviceId;
+	if (!std::filesystem::exists(devicePath))
+	{
+		std::cout << "Could not find " << sDeviceId << std::endl;
+		return E_CmdErr::BadArgs;
+	}
+
+
+	std::cout << "\nReading device " << sDeviceId << "\n-------------------" << std::endl;
+	Ingester ingest(devicePath);
+
+	if (eModes & E_DataTypes::kEis)
+	{
+		Eis(sDeviceId, ingest, UserConfig().eis);
+	}
+	if (eModes & E_DataTypes::kCv)
+	{
+		Cv(sDeviceId, ingest, UserConfig().cv);
+	}
+	if (eModes & E_DataTypes::kCil)
+	{
+		Cil(sDeviceId, ingest, UserConfig().cil);
+	}
+
+	std::cout << "\nFinished " << sDeviceId << "\n" << std::endl;
+	return true;
+}
+
 void Core::Eis(const std::string sDeviceId, const Ingester& ingest, const T_EisConfig& tConfig)
 {
-	if (!tConfig.fetchKeyvals) { return; }
-
 	// EIS
 	std::cout << "\nFetching EIS values..." << std::endl;
 	T_EisData tEisData = ingest.ParseEis(tConfig.keyVals);
