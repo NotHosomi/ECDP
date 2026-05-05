@@ -7,6 +7,7 @@
 #include "StrUtils.h"
 #include "JsonLoader.h"
 #include "Commands.h"
+#include "Options.h"
 
 
 Core::Core()
@@ -54,6 +55,12 @@ bool Core::Run(const std::string sDeviceId, E_DataTypes eModes)
 	std::cout << "\nReading device " << sDeviceId << "\n-------------------" << std::endl;
 	Ingester ingest(devicePath);
 
+	// todo: pull from archive
+	// compare
+	// See if the archived data is missing components
+	// run the missing components
+	// add the data to the archive
+
 	if (eModes & E_DataTypes::kEis)
 	{
 		Eis(sDeviceId, ingest, UserConfig().eis);
@@ -71,13 +78,88 @@ bool Core::Run(const std::string sDeviceId, E_DataTypes eModes)
 	return true;
 }
 
-void Core::Eis(const std::string sDeviceId, const Ingester& ingest, const T_EisConfig& tConfig)
+T_EisData Core::Eis(const std::string sDeviceId, const Ingester& ingest, const T_EisConfig& tConfig)
 {
 	// EIS
 	std::cout << "\nFetching EIS values..." << std::endl;
 	T_EisData tEisData = ingest.ParseEis(tConfig.keyVals);
 
 	// EIS Table
+	PrintEisVals(tEisData, tConfig);
+
+	// EIS Plot
+	if (std::get<int>(Options::Get().GetOpt("eis-plot-avrg").val) == 1)
+	{
+		std::array<T_ErrorBarD, 2> EisData = ingest.GetEisPlot();
+		m_Grapher.GraphDeviceEIS(sDeviceId, EisData[0], EisData[1]);
+	}
+	if (tConfig.plotEachElectrode)
+	{
+		// todo: add this to the grapher
+	}
+	return tEisData;
+}
+
+T_CvData Core::Cv(const std::string sDeviceId, const Ingester& ingest, const T_CvConfig& tConfig)
+{
+	if (!tConfig.calcCsc) { return; }
+
+	std::vector<std::string> cvExcludes;
+	T_CvData tCvData = ingest.CalculateCscVals();
+	PrintCscVals(tCvData);
+
+	// Plot each CV
+	if (tConfig.plotEachElectrode)
+	{
+		for (const auto& [key, data] : tCvData.mElectrodes)
+		{
+			m_Grapher.GraphElectrodeCV(sDeviceId, key, data);
+		}
+	}
+	
+	// Plot aggregate CV
+	if (tConfig.plotCv)
+	{
+		T_ErrorBarD tCvPlot = ingest.GetCvPlot(cvExcludes);
+		m_Grapher.GraphDeviceCV(sDeviceId, tCvPlot);
+	}
+	return tCvData;
+}
+
+T_CilData Core::Cil(const std::string sDeviceId, const Ingester& ingest, const T_CilConfig& tConfig)
+{
+	if (tConfig.calcCil)
+	{
+		T_CilData tCilData = ingest.CalculateCilVals();
+		if (tCilData.vPulseWidths.size() == 0)
+		{
+			return;
+		}
+		std::cout << "\nCIL values" << std::endl;
+		PrintCilVals(tCilData.vPulseWidths, tCilData.mCilVals, tCilData.vCilStats);
+		std::cout << "\nNormalised CIL values" << std::endl;
+		PrintCilVals(tCilData.vPulseWidths, tCilData.mCilValsNormalised, tCilData.vCilStatsNormalised);
+
+		if (tConfig.plotCil)
+		{
+			// Plot CIL values
+			m_Grapher.GraphDeviceCIL(sDeviceId, tCilData);
+		}
+		if (tConfig.plotEachElectrode)
+		{
+			// todo
+		}
+		return tCilData;
+	}
+}
+
+T_UserConfig& Core::UserConfig()
+{
+	return m_tUserConfig;
+}
+
+void Core::PrintEisVals(const T_EisData& tEisData, const T_EisConfig& tConfig)
+{
 	std::vector<std::string> headers;
 	headers.push_back("Electrode");
 	for (auto keyval : tConfig.keyVals)
@@ -105,74 +187,6 @@ void Core::Eis(const std::string sDeviceId, const Ingester& ingest, const T_EisC
 	EisTable.AddRow("AVRG", tEisData.vAverages);
 	EisTable.AddRow("STDDEV", tEisData.vStddev);
 	EisTable.Print(TERM_BOLDRED);
-
-
-	// EIS Plot
-	if (tConfig.plotEis)
-	{
-		std::array<T_ErrorBarD, 2> EisData = ingest.GetEisPlot();
-		m_Grapher.GraphDeviceEIS(sDeviceId, EisData[0], EisData[1]);
-	}
-	if (tConfig.plotEachElectrode)
-	{
-		// todo: add this to the grapher
-	}
-}
-
-void Core::Cv(const std::string sDeviceId, const Ingester& ingest, const T_CvConfig& tConfig)
-{
-	if (!tConfig.calcCsc) { return; }
-
-	std::vector<std::string> cvExcludes;
-	T_CvData tCv = ingest.CalculateCscVals();
-	PrintCscVals(tCv);
-
-	// Plot each CV
-	if (tConfig.plotEachElectrode)
-	{
-		for (const auto& [key, data] : tCv.mElectrodes)
-		{
-			m_Grapher.GraphElectrodeCV(sDeviceId, key, data);
-		}
-	}
-	
-	// Plot aggregate CV
-	if (tConfig.plotCv)
-	{
-		T_ErrorBarD tCvPlot = ingest.GetCvPlot(cvExcludes);
-		m_Grapher.GraphDeviceCV(sDeviceId, tCvPlot);
-	}
-}
-
-void Core::Cil(const std::string sDeviceId, const Ingester& ingest, const T_CilConfig& tConfig)
-{
-	if (tConfig.calcCil)
-	{
-		T_CilData cils = ingest.CalculateCilVals();
-		if (cils.vPulseWidths.size() == 0)
-		{
-			return;
-		}
-		std::cout << "\nCIL values" << std::endl;
-		PrintCilVals(cils.vPulseWidths, cils.mCilVals, cils.vCilStats);
-		std::cout << "\nNormalised CIL values" << std::endl;
-		PrintCilVals(cils.vPulseWidths, cils.mCilValsNormalised, cils.vCilStatsNormalised);
-
-		if (tConfig.plotCil)
-		{
-			// Plot CIL values
-			m_Grapher.GraphDeviceCIL(sDeviceId, cils);
-		}
-		if (tConfig.plotEachElectrode)
-		{
-
-		}
-	}
-}
-
-T_UserConfig& Core::UserConfig()
-{
-	return m_tUserConfig;
 }
 
 void Core::PrintCscVals(const T_CvData& tCvData)
