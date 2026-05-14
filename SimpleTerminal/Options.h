@@ -68,21 +68,22 @@ bool Options::SetOpt(const std::string& sOptName, T val, E_OptType eType)
 template<typename T>
 T Options::GetOpt(const std::string& sName)
 {
-	const T_Opt opt = m_mOptions.at(opt);
+	const T_Opt opt = m_mOptions.at(sName);
 	if constexpr (std::is_same<T, int>::value)
 	{
-		//return std::any_cast<int>(opt.val);
 		return std::get<int>(opt.val);
 	}
 	else if constexpr (std::is_floating_point_v<T>)
 	{
-		//return static_cast<T>(std::any_cast<double>(opt.val));
 		return std::get<double>(opt.val);
 	}
 	else if constexpr (std::is_same<T, std::string>::value)
 	{
-		//return std::any_cast<std::string>(opt.val);
 		return std::get<std::string>(opt.val);
+	}
+	else if constexpr (std::is_same<T, bool>::value)
+	{
+		return static_cast<bool>(std::get<int>(opt.val));
 	}
 	else
 	{
