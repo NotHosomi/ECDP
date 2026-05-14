@@ -3,8 +3,7 @@
 #include <filesystem>
 #include "ErrorBarData.h"
 #include "CvData.h"
-
-struct T_CilData;
+#include "CilData.h"
 
 enum E_GraphType
 {
@@ -20,7 +19,7 @@ public:
 
 	void GraphEIS(std::string sId, T_ErrorBarD tZ, T_ErrorBarD tPhase);
 	void GraphCV(std::string sId, T_ErrorBarD tLoop);
-	void GraphCV(std::string sId, std::string filename, T_CvData tLoop);
+	void GraphCV(std::string sId, const std::string& filename, T_CvData tLoop);
 	void GraphCIL(std::string sId, const T_CilData& data);
 
 	std::string GetGraphPath(std::string sId, E_GraphType eType);

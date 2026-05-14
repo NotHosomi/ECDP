@@ -12,6 +12,7 @@
 #include "PrintTable.h"
 #include "UserConfig.h"
 #include "JsonLoader.h"
+#include "DeviceData.h"
 
 std::string RoundToStr(double num) { return std::to_string(static_cast<int>(num + 0.5)); }
 
@@ -126,6 +127,11 @@ int main(int argc, char* argv[])
 		std::cout << "Data directory: " << std::filesystem::path(dataPath) << std::endl;
 	}
 
+
+	std::map<std::string, T_DeviceData> mArchive;
+	// todo: check for cached archive
+
+
 	std::string devicePath = "";
 	Grapher grapher(dataPath);
 	for(;;)
@@ -138,6 +144,11 @@ int main(int argc, char* argv[])
 			{
 				break;
 			}
+			if (mArchive.contains(deviceId))
+			{
+				std::cout << "Device " << deviceId << " has already been parsed" << std::endl;
+				deviceId = "";
+			}
 			std::cin.clear();
 		}
 		devicePath = dataPath + "/" + deviceId;
@@ -149,12 +160,14 @@ int main(int argc, char* argv[])
 		}
 
 		Ingester ingest(devicePath);
+		T_DeviceData devData;
 
 		// EIS
 		if (tUserConfig.eis.fetchKeyvals)
 		{
 			std::cout << "\nFetching EIS values..." << std::endl;
 			std::map<std::string, std::vector<double>> ImpedanceKeyvals = ingest.GetEisKeyvals(tUserConfig.eis.keyVals);
+			devData.EisKeyvals = ImpedanceKeyvals;
 
 			// EIS Table
 			std::vector<std::string> headers;
@@ -174,7 +187,12 @@ int main(int argc, char* argv[])
 					validCount += 1;
 					colour = TERM_GREEN;
 				}
-				EisTable.AddRow({ iter.first, RoundToStr(iter.second[0]), RoundToStr(iter.second[1]), RoundToStr(iter.second[2]) }, colour);
+				std::vector<std::string> row = { iter.first };
+				for (auto& val : iter.second)
+				{
+					row.push_back(RoundToStr(val));
+				}
+				EisTable.AddRow(row, colour);
 			}
 			EisTable.Print(TERM_BOLDRED);
 
@@ -188,6 +206,7 @@ int main(int argc, char* argv[])
 			{
 				// todo: add this to the grapher
 			}
+
 		}
 
 		// CV
@@ -246,6 +265,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
+		mArchive.insert({ deviceId, devData });
 		std::cout << "\nFinished " << deviceId << "\n" << std::endl;
 		deviceId = "";
 	}

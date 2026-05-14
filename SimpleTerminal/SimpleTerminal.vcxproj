@@ -138,6 +138,7 @@
     <ClCompile Include="PrintTable.cpp" />
     <ClCompile Include="SimpleTerminal.cpp" />
     <ClCompile Include="stddev.cpp" />
+    <ClCompile Include="DeviceData.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="JsonLoader.h" />
@@ -151,6 +152,7 @@
     <ClInclude Include="stddev.h" />
     <ClInclude Include="Symbols.h" />
     <ClInclude Include="TerminalColours.h" />
+    <ClInclude Include="DeviceData.h" />
     <ClInclude Include="UserConfig.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

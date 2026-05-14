@@ -100,7 +100,7 @@ void Grapher::GraphCV(std::string sId, T_ErrorBarD tLoop)
 	std::cout << "Done\n" << std::endl;
 }
 
-void Grapher::GraphCV(std::string sId, std::string filename, T_CvData tElectrode)
+void Grapher::GraphCV(std::string sId, const std::string& filename, T_CvData tElectrode)
 {
 	std::cout << "Rendering CV plot (" << filename << ")... " << std::flush;
 

@@ -240,12 +240,13 @@ T_CilData Ingester::CalculateCilVals() const
 		std::cout << "Multiple voltage transient files found. Using " + m_vCilPaths[0].filename().string() << std::endl;
 	}
 	CsvFile csv(m_vCilPaths[0].string());
-	if (csv.GetHeadings().size() == 1)
+	if (csv.GetHeadings().size() <= 1)
 	{
 		csv = CsvFile(m_vCilPaths[0].string(), ';');
-		if (csv.GetHeadings().size() == 1)
+		if (csv.GetHeadings().size() <= 1)
 		{
 			std::cout << "Could not read voltage transients file" << std::endl;
+			return {}; // todo, try other VT files before giving up
 		}
 	}
 	for (int i = 1; i < csv.GetHeadings().size(); ++i)
