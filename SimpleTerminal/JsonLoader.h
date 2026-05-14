@@ -66,10 +66,9 @@ bool LoadBson(const std::filesystem::path& fileAddr, T& data)
 	{
 		return false;
 	}
-	std::vector<uint8_t> bson(std::istreambuf_iterator<uint8_t>(file), std::istreambuf_iterator<uint8_t>());
 	try
 	{
-		nlohmann::json j = nlohmann::json::from_bson(bson);
+		nlohmann::json j = nlohmann::json::from_bson(file);
 		file.close();
 		data = j.get<T>();
 		return true;
@@ -93,7 +92,7 @@ bool SaveBson(const std::filesystem::path& fileAddr, const T& data)
 	try
 	{
 		std::vector<uint8_t> bson = nlohmann::json::to_bson(j);
-		file.write(bson.data(), bson.size());
+		file.write(reinterpret_cast<char*>(bson.data()), bson.size());
 		file.close();
 		return true;
 	}

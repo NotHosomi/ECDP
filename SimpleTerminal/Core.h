@@ -34,14 +34,14 @@ public:
 		kCv = 1 << 1,
 		kCil = 1 << 2
 	};
-	bool Run(const std::string sDeviceId, E_DataTypes eModes);
+	E_CmdErr Run(const std::string sDeviceId, E_DataTypes eModes);
 
 	T_UserConfig& UserConfig();
 
 private:
-	T_EisData Eis(const std::string sDeviceId, const Ingester& ingest, const T_EisConfig& tUserConfig);
-	T_CvData Cv(const std::string sDeviceId, const Ingester& ingest, const T_CvConfig& tUserConfig);
-	T_CilData Cil(const std::string sDeviceId, const Ingester& ingest, const T_CilConfig& tUserConfig);
+	T_EisData Eis(T_DeviceData& tDeviceData, const Ingester& ingest, const T_EisConfig& tUserConfig);
+	T_CvData Cv(T_DeviceData& tDeviceData, const Ingester& ingest, const T_CvConfig& tUserConfig);
+	T_CilData Cil(T_DeviceData& tDeviceData, const Ingester& ingest, const T_CilConfig& tUserConfig);
 
 	void PrintEisVals(const T_EisData& tEisData, const T_EisConfig& tConfig); // todo
 	void PrintCscVals(const T_CvData& tCvData);

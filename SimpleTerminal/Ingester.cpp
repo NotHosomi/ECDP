@@ -166,7 +166,7 @@ T_EisData Ingester::ParseEis(const std::vector<std::string>& vKeyVals) const
 
 		// grab key impedance values
 		std::vector<double> keyvals(vKeyVals.size(), -1);
-		for (int row; row < entry.GetCol(0).size(); ++row)
+		for (int row=0; row < entry.GetCol(0).size(); ++row)
 		{
 			for (int i = 0; i < vKeyVals.size(); ++i)
 			{
@@ -494,4 +494,9 @@ double Ingester::GetElectrodeArea_cm2() const
 double Ingester::GetElectrodeArea_um2() const
 {
 	return std::pow(m_tDeviceInfo.electrodeDiameter / 2, 2) * M_PI;
+}
+
+const T_DeviceInfo& Ingester::GetDeviceInfo() const
+{
+	return m_tDeviceInfo;
 }

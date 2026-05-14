@@ -77,13 +77,10 @@ void Grapher::GraphDeviceEIS(const std::string& sId, const T_ErrorBarD& tZ, cons
 
 void Grapher::GraphElectrodeEIS(const std::string& sId, const Ingester& ingest)
 {
-}
-
-void Grapher::GraphElectrodeEIS(const std::string& sId, const Ingester& ingest)
-{
-	std::vector<CsvFile> vCsv = ingest.;
-	auto fig = matplot::figure(true);
-	fit.plot()
+	std::cout << "GraphElectrodeEIS not implemented yet" << std::endl;
+	//std::vector<CsvFile> vCsv = ingest.GetEisFiles();
+	//auto fig = matplot::figure(true);
+	//fig.plot()
 }
 
 void Grapher::GraphDeviceCV(const std::string& sId, T_ErrorBarD tLoop)

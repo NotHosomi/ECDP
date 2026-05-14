@@ -20,7 +20,7 @@ void Archive::SaveAll()
 		if (m_mFreshlyGenerated.at(key))
 		{
 			SaveDevice(key);
-			m_mFreshlyGenerated.at(key) = true;
+			m_mFreshlyGenerated.at(key) = false;
 		}
 	}
 }

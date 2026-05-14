@@ -69,7 +69,7 @@ E_CmdErr Commands::SingleDevice(const std::string& args)
 		std::cin.clear();
 	}
 
-	int eModes;
+	int eModes = Core::kNone;
 	if (mode == "all")
 	{
 		eModes |= (Core::kEis | Core::kCv | Core::kCil);
@@ -86,9 +86,12 @@ E_CmdErr Commands::SingleDevice(const std::string& args)
 	{
 		eModes = Core::kCil;
 	}
-	m_pCore->Run(deviceId, static_cast<Core::E_DataTypes>(eModes));
-
-	return E_CmdErr::None;
+	else
+	{
+		std::cout << "Unclear mode. Use \"Eis\", \"Cv\", \"Cil\" or \"All\"" << std::endl;
+		return E_CmdErr::BadArgs;
+	}
+	return m_pCore->Run(deviceId, static_cast<Core::E_DataTypes>(eModes));
 }
 
 E_CmdErr Commands::MultiDevice(const std::string& vArgs)

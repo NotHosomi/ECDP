@@ -21,7 +21,7 @@ public:
 	T_CilData CalculateCilVals() const;
 
 	std::array<T_ErrorBarD, 2> GetEisPlot() const;
-	T_ErrorBarD GetCvPlot(const std::vector<std::string>& vExcludes) const;
+	T_ErrorBarD GetCvPlot(const std::vector<std::string>& vExcludes = {}) const;
 
 	const std::vector<std::filesystem::path> GetEisFiles() const;
 	const std::vector<std::filesystem::path> GetCvFiles() const;
@@ -30,6 +30,7 @@ public:
 	float GetElectrodeDiameter() const;
 	double GetElectrodeArea_cm2() const;
 	double GetElectrodeArea_um2() const;
+	const T_DeviceInfo& GetDeviceInfo() const;
 
 private:
 	std::vector<CsvFile> readFiles(const std::vector<std::filesystem::path>& fileaddrs) const;

@@ -39,10 +39,15 @@ Core::Core()
 	{
 		std::cout << "Data directory: " << std::filesystem::path(m_DataPath) << std::endl;
 	}
-	m_Grapher.SetOutputPath(m_tUserConfig.plotDirectory);
+	std::string plotDir = m_tUserConfig.plotDirectory;
+	if (plotDir == "")
+	{
+		plotDir = "./Plots";
+	}
+	m_Grapher.SetOutputPath(plotDir);
 }
 
-bool Core::Run(const std::string sDeviceId, E_DataTypes eModes)
+E_CmdErr Core::Run(const std::string sDeviceId, E_DataTypes eModes)
 {
 	std::filesystem::path devicePath = UserConfig().dataDirectory + "/" + sDeviceId;
 	if (!std::filesystem::exists(devicePath))
@@ -55,102 +60,170 @@ bool Core::Run(const std::string sDeviceId, E_DataTypes eModes)
 	std::cout << "\nReading device " << sDeviceId << "\n-------------------" << std::endl;
 	Ingester ingest(devicePath);
 
+
 	// todo: pull from archive
+	T_DeviceData data = m_Archive.GetDevice(sDeviceId);
+	bool isInArchive = data.sDeviceId != "";
+	if (isInArchive)
+	{
+		std::cout << "Device " << sDeviceId << "found in archive" << std::endl;
+	}
+	else
+	{
+		data.sDeviceId = sDeviceId;
+		data.tInfo = ingest.GetDeviceInfo();
+	}
+
 	// compare
 	// See if the archived data is missing components
 	// run the missing components
 	// add the data to the archive
 
+
 	if (eModes & E_DataTypes::kEis)
 	{
-		Eis(sDeviceId, ingest, UserConfig().eis);
+		Eis(data, ingest, m_tUserConfig.eis);
 	}
 	if (eModes & E_DataTypes::kCv)
 	{
-		Cv(sDeviceId, ingest, UserConfig().cv);
+		Cv(data, ingest, m_tUserConfig.cv);
 	}
 	if (eModes & E_DataTypes::kCil)
 	{
-		Cil(sDeviceId, ingest, UserConfig().cil);
+		Cil(data, ingest, m_tUserConfig.cil);
 	}
 
+	if (!isInArchive || Options::Get().GetOpt<bool>("arch-overwrite"))
+	{
+		m_Archive.AddDevice(data);
+	}
+	m_Archive.SaveAll();
+
 	std::cout << "\nFinished " << sDeviceId << "\n" << std::endl;
-	return true;
+	return E_CmdErr::None;
 }
 
-T_EisData Core::Eis(const std::string sDeviceId, const Ingester& ingest, const T_EisConfig& tConfig)
+T_EisData Core::Eis(T_DeviceData& tDeviceData, const Ingester& ingest, const T_EisConfig& tConfig)
 {
 	// EIS
-	std::cout << "\nFetching EIS values..." << std::endl;
-	T_EisData tEisData = ingest.ParseEis(tConfig.keyVals);
+	if (!tDeviceData.tEis.has_value() || Options::Get().GetOpt<bool>("arch-overwrite") || Options::Get().GetOpt<bool>("arch-recalc"))
+	{
+		std::cout << "\nFetching EIS values...";
+		T_EisData newdata = ingest.ParseEis(tConfig.keyVals);
+		if (newdata.mImpedances.size() == 0)
+		{
+			std::cout << "No EIS data found" << std::endl;
+		}
+		else
+		{
+			tDeviceData.tEis = newdata;
+		}
+	}
 
+	if (tDeviceData.tEis.value().mImpedances.size() == 0)
+	{
+		return {};
+	}
 	// EIS Table
-	PrintEisVals(tEisData, tConfig);
+	PrintEisVals(tDeviceData.tEis.value(), tConfig);
 
 	// EIS Plot
 	if (std::get<int>(Options::Get().GetOpt("eis-plot-avrg").val) == 1)
 	{
 		std::array<T_ErrorBarD, 2> EisData = ingest.GetEisPlot();
-		m_Grapher.GraphDeviceEIS(sDeviceId, EisData[0], EisData[1]);
+		m_Grapher.GraphDeviceEIS(tDeviceData.sDeviceId, EisData[0], EisData[1]);
 	}
 	if (tConfig.plotEachElectrode)
 	{
 		// todo: add this to the grapher
 	}
-	return tEisData;
+	return tDeviceData.tEis.value();
 }
 
-T_CvData Core::Cv(const std::string sDeviceId, const Ingester& ingest, const T_CvConfig& tConfig)
+T_CvData Core::Cv(T_DeviceData& tDeviceData, const Ingester& ingest, const T_CvConfig& tConfig)
 {
-	if (!tConfig.calcCsc) { return; }
+	if (!tConfig.calcCsc) { return {}; }
 
-	std::vector<std::string> cvExcludes;
-	T_CvData tCvData = ingest.CalculateCscVals();
-	PrintCscVals(tCvData);
+
+	if (!tDeviceData.tCv.has_value() || Options::Get().GetOpt<bool>("arch-overwrite") || Options::Get().GetOpt<bool>("arch-recalc"))
+	{
+		T_CvData newdata = ingest.CalculateCscVals();
+		if (newdata.mElectrodes.size() == 0)
+		{
+			std::cout << "No CV data found" << std::endl;
+		}
+		else
+		{
+			tDeviceData.tCv = newdata;
+		}
+	}
+
+	if (tDeviceData.tCv.value().mElectrodes.size() == 0)
+	{
+		return {};
+	}	
+	//std::vector<std::string> cvExcludes;
+	PrintCscVals(tDeviceData.tCv.value());
 
 	// Plot each CV
 	if (tConfig.plotEachElectrode)
 	{
-		for (const auto& [key, data] : tCvData.mElectrodes)
+		for (const auto& [key, data] : tDeviceData.tCv.value().mElectrodes)
 		{
-			m_Grapher.GraphElectrodeCV(sDeviceId, key, data);
+			m_Grapher.GraphElectrodeCV(tDeviceData.sDeviceId, key, data);
 		}
 	}
 	
 	// Plot aggregate CV
 	if (tConfig.plotCv)
 	{
-		T_ErrorBarD tCvPlot = ingest.GetCvPlot(cvExcludes);
-		m_Grapher.GraphDeviceCV(sDeviceId, tCvPlot);
+		T_ErrorBarD tCvPlot = ingest.GetCvPlot();
+		m_Grapher.GraphDeviceCV(tDeviceData.sDeviceId, tCvPlot);
 	}
-	return tCvData;
+	return tDeviceData.tCv.value();
 }
 
-T_CilData Core::Cil(const std::string sDeviceId, const Ingester& ingest, const T_CilConfig& tConfig)
+T_CilData Core::Cil(T_DeviceData& tDeviceData, const Ingester& ingest, const T_CilConfig& tConfig)
 {
-	if (tConfig.calcCil)
+	if (!tConfig.calcCil)
 	{
-		T_CilData tCilData = ingest.CalculateCilVals();
-		if (tCilData.vPulseWidths.size() == 0)
-		{
-			return;
-		}
-		std::cout << "\nCIL values" << std::endl;
-		PrintCilVals(tCilData.vPulseWidths, tCilData.mCilVals, tCilData.vCilStats);
-		std::cout << "\nNormalised CIL values" << std::endl;
-		PrintCilVals(tCilData.vPulseWidths, tCilData.mCilValsNormalised, tCilData.vCilStatsNormalised);
-
-		if (tConfig.plotCil)
-		{
-			// Plot CIL values
-			m_Grapher.GraphDeviceCIL(sDeviceId, tCilData);
-		}
-		if (tConfig.plotEachElectrode)
-		{
-			// todo
-		}
-		return tCilData;
+		return {};
 	}
+
+	if (!tDeviceData.tCil.has_value() || Options::Get().GetOpt<bool>("arch-overwrite") || Options::Get().GetOpt<bool>("arch-recalc"))
+	{
+		T_CilData newdata = ingest.CalculateCilVals();
+		
+		if (newdata.mCilVals.size() == 0)
+		{
+			std::cout << "No CIL data found" << std::endl;
+		}
+		else
+		{
+			tDeviceData.tCil = newdata;
+		}
+	}
+
+	const T_CilData& tCilData = tDeviceData.tCil.value();
+	if (tCilData.vPulseWidths.size() == 0)
+	{
+		return {};
+	}
+	std::cout << "\nCIL values" << std::endl;
+	PrintCilVals(tCilData.vPulseWidths, tCilData.mCilVals, tCilData.vCilStats);
+	std::cout << "\nNormalised CIL values" << std::endl;
+	PrintCilVals(tCilData.vPulseWidths, tCilData.mCilValsNormalised, tCilData.vCilStatsNormalised);
+
+	if (tConfig.plotCil)
+	{
+		// Plot CIL values
+		m_Grapher.GraphDeviceCIL(tDeviceData.sDeviceId, tCilData);
+	}
+	if (tConfig.plotEachElectrode)
+	{
+		// todo
+	}
+	return tCilData;
 }
 
 T_UserConfig& Core::UserConfig()
@@ -200,7 +273,7 @@ void Core::PrintCscVals(const T_CvData& tCvData)
 		{
 			colour = TERM_RED;
 		}
-		CscTable.AddRow({ iter.first, std::to_string(iter.second.dCscNorm) }, colour);
+		CscTable.AddRow({iter.first, std::to_string(iter.second.dCsc), std::to_string(iter.second.dCscNorm)}, colour);
 		sum += iter.second.dCscNorm;
 	}
 	CscTable.AddRow("AVRG", std::vector<double>({ tCvData.tCsc.mean, tCvData.tCscNorm.mean }));

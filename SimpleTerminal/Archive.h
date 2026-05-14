@@ -8,7 +8,7 @@
 
 struct T_DeviceData
 {
-	std::string sDeviceId;
+	std::string sDeviceId = "";
 	T_DeviceInfo tInfo;
 	std::optional<T_EisData> tEis;
 	std::optional<T_CvData> tCv;
