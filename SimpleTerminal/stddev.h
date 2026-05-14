@@ -74,3 +74,15 @@ std::map<key_t, T_Stats> stddev(const std::vector<std::map<key_t, T>>& maps)
 }
 
 T_Stats combine_stats(const std::vector<T_Stats>& stats);
+
+#pragma once
+#include "stddev.h"
+
+struct T_StatGroup
+{
+    int n;
+    double mean;
+    double sd;
+};
+
+T_Stats PooledStddev(const std::vector<T_StatGroup> vGroups);

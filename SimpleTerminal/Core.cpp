@@ -9,6 +9,7 @@
 #include "Commands.h"
 #include "Options.h"
 #include "BatchData.h"
+#include "PopulationVariance.h"
 
 
 Core::Core()
@@ -325,18 +326,73 @@ T_DeviceData Core::BatchAverages(const std::vector<std::string> sIds)
 		}
 	}
 
-	std::map<std::string, std::vector<double>> eisAvrgs;
-	std::map<std::string, std::vector<double>> eisStddevs;
+	// EIS
+	std::map<std::string, std::vector<T_StatGroup>> eisStats;
 	for (auto& device : devices)
 	{
 		if (!device.tEis.has_value())
 		{
 			continue;
 		}
-		for (int i = 0; i < device.tEis.value().vAverages.size(); ++i)
+		const T_EisData& eis = device.tEis.value();
+		for (int i = 0; i < eis.vFrequencies.size(); ++i)
 		{
-
+			T_StatGroup group;
+			group.n = eis.mImpedances.size();
+			group.mean = eis.vAverages[i];
+			group.sd = eis.vStddev[i];
+			eisStats[eis.vFrequencies[i]].push_back(group);
 		}
 	}
+	std::map<std::string, T_Stats> eisBatchAvrg;
+	for (const auto& [freq, groupList] : eisStats)
+	{
+		eisBatchAvrg.insert({ freq, PooledStddev(groupList) });
+	}
+	
 
+	// CV
+	std::vector<T_StatGroup> cvStats;
+	std::vector<T_StatGroup> cvNormStats;
+	for (const auto& device : devices)
+	{
+		if (device.tCv.has_value())
+		{
+			continue;
+		}
+		const T_CvData& cv = device.tCv.value();
+		T_StatGroup group;
+		group.n = cv.mElectrodes.size();
+		group.mean = cv.tCsc.mean;
+		group.sd = cv.tCsc.stddev;
+		cvStats.push_back(group);
+		group.mean = cv.tCscNorm.mean;
+		group.sd = cv.tCscNorm.stddev;
+		cvNormStats.push_back(group);
+	}
+	T_Stats cvBatchStats = PooledStddev(cvStats);
+	T_Stats cvNormBatchStats = PooledStddev(cvNormStats);
+	
+	// CIL
+	std::map<int, std::vector<T_StatGroup>> cilStats;
+	std::map<int, std::vector<T_StatGroup>> cilNormStats;
+	for (const auto& device : devices)
+	{
+		if (device.tCv.has_value())
+		{
+			continue;
+		}
+		const T_CilData& cil = device.tCil.value();
+		T_StatGroup group;
+		group.n = cil.mCilVals.size();
+		for (int i = 0; i < cil.vPulseWidths.size(); ++i)
+		{
+			group.mean = cil.vCilStats[i].mean;
+			group.sd = cil.vCilStats[i].stddev;
+			cilStats[cil.vPulseWidths[i]].push_back(group);
+			group.mean = cil.vCilStatsNormalised[i].mean;
+			group.sd = cil.vCilStatsNormalised[i].stddev;
+			cilNormStats[cil.vPulseWidths[i]].push_back(group);
+		}
+	}
 }

@@ -31,3 +31,26 @@ T_Stats combine_stats(const std::vector<T_Stats>& stats)
 
     return combined;
 }
+
+T_Stats PooledStddev(const std::vector<T_StatGroup> vGroups)
+{
+    T_Stats out;
+    out.samples = 0;
+    double weightedMeanSum = 0.0;
+    for (const auto& group : vGroups)
+    {
+        out.samples += group.n;
+        weightedMeanSum += group.n * group.mean;
+    }
+    out.mean = weightedMeanSum / out.samples;
+
+    double numerator = 0.0;
+    for (const auto& g : vGroups)
+    {
+        double withinGroup = (g.n - 1) * g.sd * g.sd;
+        double betweenGroup = g.n * std::pow(g.mean - out.mean, 2);
+        numerator += withinGroup + betweenGroup;
+    }
+    out.stddev = std::sqrt(numerator / out.samples - vGroups.size());
+    return out;
+}
