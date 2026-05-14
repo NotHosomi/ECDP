@@ -8,8 +8,6 @@
 #include "JsonLoader.h"
 #include "Commands.h"
 #include "Options.h"
-#include "BatchData.h"
-#include "PopulationVariance.h"
 
 
 Core::Core()
@@ -345,11 +343,15 @@ T_DeviceData Core::BatchAverages(const std::vector<std::string> sIds)
 		}
 	}
 	std::map<std::string, T_Stats> eisBatchAvrg;
+	PrintTable eisTable({ "Frequency (Hz)", "Avrg Impedance", "Standard Deviation" });
 	for (const auto& [freq, groupList] : eisStats)
 	{
-		eisBatchAvrg.insert({ freq, PooledStddev(groupList) });
+		T_Stats stats = PooledStddev(groupList);
+		eisBatchAvrg.insert({ freq, stats });
+		eisTable.AddRow({ freq, SU::RoundToStr(stats.mean), SU::RoundToStr(stats.stddev) });
 	}
-	
+	eisTable.Print(TERM_GREEN);
+
 
 	// CV
 	std::vector<T_StatGroup> cvStats;
@@ -372,6 +374,11 @@ T_DeviceData Core::BatchAverages(const std::vector<std::string> sIds)
 	}
 	T_Stats cvBatchStats = PooledStddev(cvStats);
 	T_Stats cvNormBatchStats = PooledStddev(cvNormStats);
+	PrintTable cvTable({ " ", "Average", "Stddev" });
+	cvTable.AddRow({ "mC", std::to_string(cvBatchStats.mean), std::to_string(cvBatchStats.stddev) });
+	cvTable.AddRow({ "mC/cm^2", std::to_string(cvNormBatchStats.mean), std::to_string(cvNormBatchStats.stddev) });
+	cvTable.Print(TERM_BLUE);
+
 	
 	// CIL
 	std::map<int, std::vector<T_StatGroup>> cilStats;
@@ -395,4 +402,16 @@ T_DeviceData Core::BatchAverages(const std::vector<std::string> sIds)
 			cilNormStats[cil.vPulseWidths[i]].push_back(group);
 		}
 	}
+	std::map<int, T_Stats> cilBatchAvrg;
+	std::map<int, T_Stats> cilNormBatchAvrg;
+	PrintTable cilTable({ "Pulse Width (microseconds)", "Avrg CIL (mC)", "Stddev", "Avrg norm CIL (mC/cm^2)", "Stddev" });
+	for (const auto& [pulseWidth, groupList] : cilStats)
+	{
+		T_Stats stats = PooledStddev(groupList);
+		cilBatchAvrg.insert({ pulseWidth, stats });
+		T_Stats statsNorm = PooledStddev(groupList);
+		cilNormBatchAvrg.insert({ pulseWidth, statsNorm});
+		cilTable.AddRow({ std::to_string(pulseWidth), std::to_string(stats.mean), std::to_string(stats.stddev), std::to_string(statsNorm.mean), std::to_string(stats.stddev) });
+	}
+	cilTable.Print(TERM_BOLDYELLOW);
 }
