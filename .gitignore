@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 
 SimpleTerminal/TestData/
+/SimpleTerminal/plots
+/SimpleTerminal/Archive
