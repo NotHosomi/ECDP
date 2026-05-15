@@ -18,6 +18,7 @@ void Grapher::SetOutputPath(std::filesystem::path outputDir)
 	{
 		std::filesystem::create_directories(outputDir);
 	}
+	m_PlotDir = outputDir;
 }
 
 void Grapher::GraphDeviceEIS(const std::string& sId, const T_ErrorBarD& tZ, const T_ErrorBarD& tPhase)
@@ -106,9 +107,12 @@ void Grapher::GraphDeviceCV(const std::string& sId, T_ErrorBarD tLoop)
 	title(sId + " CV");
 	ylabel("Current (A)");
 	xlabel("Voltage (V)");
+	gca()->x_axis().label_font_size(28);
+	gca()->y_axis().label_font_size(28);
+	gca()->font_size(30);
 
 	matplot::xlim({ -0.65, 0.85 });
-	matplot::ylim({ -2e-5, 2e-5 });
+	matplot::ylim({ -3e-6, 3e-6 });
 
 	std::string path = m_PlotDir.string() + "/" + sId + "/Plots/";
 	std::filesystem::create_directories(path);
@@ -136,7 +140,7 @@ void Grapher::GraphElectrodeCV(const std::string& sId, const std::string& filena
 	matplot::xlabel("Voltage (V)");
 
 	matplot::xlim({ -0.65, 0.85 });
-	matplot::ylim({ -2e-5, 2e-5 });
+	matplot::ylim({ -3e-6, 3e-6 });
 
 	std::string path = m_PlotDir.string() + "/" + sId + "/Plots/CV/";
 	std::filesystem::create_directories(path);

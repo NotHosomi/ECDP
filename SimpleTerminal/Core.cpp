@@ -200,6 +200,10 @@ T_CilData Core::Cil(T_DeviceData& tDeviceData, const Ingester& ingest, const T_C
 		}
 	}
 
+	if (!tDeviceData.tCil.has_value())
+	{
+		return {};
+	}
 	const T_CilData& tCilData = tDeviceData.tCil.value();
 	if (tCilData.vPulseWidths.size() == 0)
 	{
