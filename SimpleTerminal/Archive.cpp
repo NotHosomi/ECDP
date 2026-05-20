@@ -17,7 +17,7 @@ void Archive::SaveAll()
 {
 	for (const auto& [key, val] : m_mDevices)
 	{
-		if (m_mFreshlyGenerated.at(key))
+		if (m_mFreshlyGenerated.contains(key) && m_mFreshlyGenerated.at(key))
 		{
 			SaveDevice(key);
 			m_mFreshlyGenerated.at(key) = false;
@@ -27,11 +27,14 @@ void Archive::SaveAll()
 
 void Archive::LoadAll()
 {
+	// todo: fix this, the .dat extension will break the loading this way
 	for (const auto& entry : std::filesystem::directory_iterator(m_Path))
 	{
-		if (!m_mDevices.contains(entry.path().filename().string()))
+		std::string filename = entry.path().filename().string();
+		if (!m_mDevices.contains(filename))
 		{
-			LoadDevice(entry.path().filename().string());
+			LoadDevice(filename);
+			m_mFreshlyGenerated[filename] = false;
 		}
 	}
 }
@@ -48,7 +51,7 @@ const T_DeviceData& Archive::GetDevice(const std::string& sDeviceId)
 	{
 		return m_mDevices.at(sDeviceId);
 	}
-	if (IsDeviceInCache(sDeviceId))
+	if (!IsDeviceInCache(sDeviceId))
 	{
 		if (LoadDevice(sDeviceId))
 		{
@@ -65,7 +68,7 @@ bool Archive::SaveDevice(std::string sDeviceId)
 	{
 		return false;
 	}
-	if (m_mFreshlyGenerated.contains(sDeviceId) && m_mFreshlyGenerated.at(sDeviceId))
+	if (m_mFreshlyGenerated.contains(sDeviceId) && !m_mFreshlyGenerated.at(sDeviceId))
 	{
 		// no point saving a device that was loaded from data anyway
 		return true;
@@ -80,7 +83,7 @@ bool Archive::LoadDevice(std::string sDeviceId)
 	if (m_mDevices.contains(sDeviceId)) { return false; }
 
 	std::string sFilename = sDeviceId + ".dat";
-	return LoadBson(sFilename, m_mDevices[sDeviceId]);
+	return LoadBson(m_Path / sFilename, m_mDevices[sDeviceId]);
 }
 
 bool Archive::IsDeviceInCache(std::string sDeviceId)

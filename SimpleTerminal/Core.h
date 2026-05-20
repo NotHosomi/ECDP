@@ -37,7 +37,7 @@ public:
 		kCil = 1 << 2
 	};
 	E_CmdErr Run(const std::string sDeviceId, E_DataTypes eModes);
-	void BatchAverages(const std::vector<std::string> sIds);
+	bool BatchAverages(const std::vector<std::string> sIds);
 
 	T_UserConfig& UserConfig();
 

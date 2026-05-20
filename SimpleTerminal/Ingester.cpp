@@ -188,6 +188,7 @@ T_EisData Ingester::ParseEis(const std::vector<std::string>& vKeyVals) const
 		out.vAverages.push_back(stats.mean);
 		out.vStddev.push_back(stats.stddev);
 	}
+	std::cout << "Done" << std::endl;
 	return out;
 }
 
