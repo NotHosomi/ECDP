@@ -73,9 +73,13 @@ T Options::GetOpt(const std::string& sName)
 	{
 		return std::get<int>(opt.val);
 	}
-	else if constexpr (std::is_floating_point_v<T>)
+	else if constexpr (std::is_same<T, double>::value)
 	{
 		return std::get<double>(opt.val);
+	}
+	else if constexpr (std::is_same<T, float>::value)
+	{
+		return static_cast<float>(std::get<double>(opt.val));
 	}
 	else if constexpr (std::is_same<T, std::string>::value)
 	{

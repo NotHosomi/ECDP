@@ -51,8 +51,8 @@ std::vector<std::string> SU::Delimit(const std::string& s, const std::string& de
     while (pos != std::string::npos)
     {
         tokens.emplace_back(s.substr(prev, pos - prev));
-        prev = pos;
-        pos = s.find(delimiter, pos);
+        prev = pos + delimiter.length();
+        pos = s.find(delimiter, prev);
     }
     tokens.emplace_back(s.substr(prev, s.size() - prev));
     return tokens;
