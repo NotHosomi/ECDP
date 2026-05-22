@@ -1,5 +1,5 @@
 #define NOMINMAX
-#include "Grapher.h"
+#include "GrapherMatplotplusplus.h"
 #include <algorithm>
 #include <matplot/matplot.h>
 #include "CvData.h"
@@ -7,21 +7,7 @@
 #include "Ingester.h"
 #include "CsvFile.h"
 
-Grapher::Grapher(std::filesystem::path outputDir)
-{
-	SetOutputPath(outputDir);
-}
-
-void Grapher::SetOutputPath(std::filesystem::path outputDir)
-{
-	if (!std::filesystem::exists(outputDir))
-	{
-		std::filesystem::create_directories(outputDir);
-	}
-	m_PlotDir = outputDir;
-}
-
-void Grapher::GraphDeviceEIS(const std::string& sId, const T_ErrorBarD& tZ, const T_ErrorBarD& tPhase)
+void GrapherMatplotplusplus::EisAverage(const std::string& sId, const T_ErrorPlotF& tZ, const T_ErrorPlotF& tPhase)
 {
 	std::cout << "Rendering EIS plot... " << std::flush;
 	using namespace matplot;
@@ -70,21 +56,18 @@ void Grapher::GraphDeviceEIS(const std::string& sId, const T_ErrorBarD& tZ, cons
 	xlabel("Frequency (Hz)");
 
 
-	std::string path = m_PlotDir.string() + "/" + sId + "/Plots/";
+	std::string path = m_sOutputPath + "/" + sId + "/Plots/";
 	std::filesystem::create_directories(path);
 	save(path + "EIS.png");
 	std::cout << "Done\n" << std::endl;
 }
 
-void Grapher::GraphElectrodeEIS(const std::string& sId, const Ingester& ingest)
+void GrapherMatplotplusplus::EisSingle(const std::string& sId, const std::string& filename, const T_EisRawData& tRaw)
 {
-	std::cout << "GraphElectrodeEIS not implemented yet" << std::endl;
-	//std::vector<CsvFile> vCsv = ingest.GetEisFiles();
-	//auto fig = matplot::figure(true);
-	//fig.plot()
+	std::cout << "EisSingle not implemented yet with Internal backend" << std::endl;
 }
 
-void Grapher::GraphDeviceCV(const std::string& sId, T_ErrorBarD tLoop)
+void GrapherMatplotplusplus::CvAverage(const std::string& sId, T_ErrorPlotF tLoop)
 {
 	if (tLoop.x.size() == 0)
 	{
@@ -114,7 +97,7 @@ void Grapher::GraphDeviceCV(const std::string& sId, T_ErrorBarD tLoop)
 	matplot::xlim({ -0.65, 0.85 });
 	matplot::ylim({ -3e-6, 3e-6 });
 
-	std::string path = m_PlotDir.string() + "/" + sId + "/Plots/";
+	std::string path = m_sOutputPath + "/" + sId + "/Plots/";
 	std::filesystem::create_directories(path);
 	matplot::gcf()->width(m_nCvWidth);
 	matplot::gcf()->height(m_nCvHeight);
@@ -122,7 +105,7 @@ void Grapher::GraphDeviceCV(const std::string& sId, T_ErrorBarD tLoop)
 	std::cout << "Done\n" << std::endl;
 }
 
-void Grapher::GraphElectrodeCV(const std::string& sId, const std::string& filename, T_CvElectrodeData tElectrode)
+void GrapherMatplotplusplus::CvSingle(const std::string& sId, const std::string& filename, T_CvElectrodeData tElectrode)
 {
 	std::cout << "Rendering CV plot (" << filename << ")... " << std::flush;
 
@@ -142,7 +125,7 @@ void Grapher::GraphElectrodeCV(const std::string& sId, const std::string& filena
 	matplot::xlim({ -0.65, 0.85 });
 	matplot::ylim({ -3e-6, 3e-6 });
 
-	std::string path = m_PlotDir.string() + "/" + sId + "/Plots/CV/";
+	std::string path = m_sOutputPath + "/" + sId + "/Plots/CV/";
 	std::filesystem::create_directories(path);
 	matplot::gcf()->width(m_nCvWidth);
 	matplot::gcf()->height(m_nCvHeight);
@@ -150,28 +133,13 @@ void Grapher::GraphElectrodeCV(const std::string& sId, const std::string& filena
 	std::cout << "Done" << std::endl;
 }
 
-void Grapher::GraphDeviceCIL(const std::string& sId, const T_CilData& data)
+void GrapherMatplotplusplus::CilAverage(const std::string& sId, const T_ErrorPlotF& data)
 {
-	// todo graph CIL
-	if (data.vPulseWidths.size() <= 1)
-	{
-		std::cout << "Only one pulse width found - Skipping CIL Plot" << std::endl;
-		return;
-	}
-	std::cout << "Rendering CIL plot..." << std::flush;
-
-	std::cout << "Todo lol" << std::endl;
-
+	std::cout << "CilAverage not implemented yet with Internal backend" << std::endl;
 }
 
-std::string Grapher::GetGraphPath(const std::string& sId, E_GraphType eType)
+void GrapherMatplotplusplus::CilMulti(const std::string& sId, const T_CilData& data)
 {
-	std::string sFilename;
-	switch (eType)
-	{
-	case E_GraphType::Eis: sFilename = "EIS/"; break;
-	case E_GraphType::Cv: sFilename = "CV/"; break;
-	case E_GraphType::Cil: sFilename = "CIL/"; break;
-	}
-	return m_PlotDir.string() + "/" + sId + "/Plots/" + sFilename + ".png";
+	std::cout << "CilAverage not implemented yet with Internal backend" << std::endl;
 }
+

@@ -21,13 +21,10 @@
     <ClCompile Include="CsvFile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Grapher.cpp">
+    <ClCompile Include="GrapherMatplotplusplus.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Ingester.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ErrorBarData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PrintTable.cpp">
@@ -57,6 +54,15 @@
     <ClCompile Include="DeviceData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GrapherPy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CsvOut.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GrapherGeneric.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CsvFile.h">
@@ -65,13 +71,13 @@
     <ClInclude Include="TerminalColours.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Grapher.h">
+    <ClInclude Include="GrapherMatplotplusplus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Ingester.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ErrorBarData.h">
+    <ClInclude Include="Plottables.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="stddev.h">
@@ -117,6 +123,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BatchData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GrapherPy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CsvOut.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GrapherGeneric.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

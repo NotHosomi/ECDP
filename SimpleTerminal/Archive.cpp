@@ -58,7 +58,8 @@ const T_DeviceData& Archive::GetDevice(const std::string& sDeviceId)
 			return m_mDevices.at(sDeviceId);
 		}
 	}
-	return {};
+	static T_DeviceData null;
+	return null;
 }
 
 bool Archive::SaveDevice(std::string sDeviceId)

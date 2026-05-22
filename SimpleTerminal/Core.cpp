@@ -8,6 +8,8 @@
 #include "JsonLoader.h"
 #include "Commands.h"
 #include "Options.h"
+#include "GrapherMatplotplusplus.h"
+#include "GrapherPy.h"
 
 
 Core::Core()
@@ -44,11 +46,15 @@ Core::Core()
 	{
 		plotDir = "./Plots";
 	}
-	m_Grapher.SetOutputPath(plotDir);
 }
 
 E_CmdErr Core::Run(const std::string sDeviceId, E_DataTypes eModes)
 {
+	if (!LoadGrapher())
+	{
+		return E_CmdErr::BadOptions;
+	}
+
 	std::filesystem::path devicePath = UserConfig().dataDirectory + "/" + sDeviceId;
 	if (!std::filesystem::exists(devicePath))
 	{
@@ -113,9 +119,14 @@ T_EisData Core::Eis(T_DeviceData& tDeviceData, const Ingester& ingest, const T_E
 		if (newdata.mImpedances.size() != 0)
 		{
 			tDeviceData.tEis = newdata;
+			std::cout << "Done" << std::endl;
 		}
 	}
 
+	if (!tDeviceData.tEis.has_value())
+	{
+		return {};
+	}
 	if (tDeviceData.tEis.value().mImpedances.size() == 0)
 	{
 		return {};
@@ -126,12 +137,15 @@ T_EisData Core::Eis(T_DeviceData& tDeviceData, const Ingester& ingest, const T_E
 	// EIS Plot
 	if (Options::Get().GetOpt<bool>("eis-plot-avrg"))
 	{
-		std::array<T_ErrorBarD, 2> EisData = ingest.GetEisPlot();
-		m_Grapher.GraphDeviceEIS(tDeviceData.sDeviceId, EisData[0], EisData[1]);
+		std::array<T_ErrorPlotF, 2> EisData = ingest.GetEisPlot();
+		m_pGrapher->EisAverage(tDeviceData.sDeviceId, EisData[0], EisData[1]);
 	}
 	if (Options::Get().GetOpt<bool>("eis-plot-each"))
 	{
-		// todo: add this to the grapher
+		for (const auto [key, data] : tDeviceData.tEis.value().mRaw)
+		{
+			m_pGrapher->EisSingle(tDeviceData.sDeviceId, key, data);
+		}
 	}
 	return tDeviceData.tEis.value();
 }
@@ -161,20 +175,19 @@ T_CvData Core::Cv(T_DeviceData& tDeviceData, const Ingester& ingest, const T_CvC
 	//std::vector<std::string> cvExcludes;
 	PrintCscVals(tDeviceData.tCv.value());
 
+	// Plot aggregate CV
+	if (tConfig.plotCv)
+	{
+		T_ErrorPlotF tCvPlot = ingest.GetCvPlot();
+		m_pGrapher->CvAverage(tDeviceData.sDeviceId, tCvPlot);
+	}
 	// Plot each CV
 	if (Options::Get().GetOpt<bool>("cv-plot-each"))
 	{
 		for (const auto& [key, data] : tDeviceData.tCv.value().mElectrodes)
 		{
-			m_Grapher.GraphElectrodeCV(tDeviceData.sDeviceId, key, data);
+			m_pGrapher->CvSingle(tDeviceData.sDeviceId, key, data);
 		}
-	}
-	
-	// Plot aggregate CV
-	if (Options::Get().GetOpt<bool>("cv-plot-avrg"))
-	{
-		T_ErrorBarD tCvPlot = ingest.GetCvPlot();
-		m_Grapher.GraphDeviceCV(tDeviceData.sDeviceId, tCvPlot);
 	}
 	return tDeviceData.tCv.value();
 }
@@ -217,11 +230,11 @@ T_CilData Core::Cil(T_DeviceData& tDeviceData, const Ingester& ingest, const T_C
 	if (tConfig.plotCil)
 	{
 		// Plot CIL values
-		m_Grapher.GraphDeviceCIL(tDeviceData.sDeviceId, tCilData);
+		//m_pGrapher->CilAverage(tDeviceData.sDeviceId, tCilData);
 	}
 	if (tConfig.plotEachElectrode)
 	{
-		// todo
+		m_pGrapher->CilMulti(tDeviceData.sDeviceId, tCilData);
 	}
 	return tCilData;
 }
@@ -302,6 +315,37 @@ void Core::PrintCilVals(std::vector<int> vPulseWidths, std::map<int, std::vector
 	cilTable.AddRow(avrgRowText);
 	cilTable.AddRow(stddevRowText);
 	cilTable.Print(TERM_YELLOW);
+}
+
+bool Core::LoadGrapher()
+{
+	if (m_pGrapher != nullptr)
+	{
+		m_pGrapher.reset();
+	}
+	std::string backend = Options::Get().GetOpt<std::string>("plotter-backend");
+	if (backend == "internal")
+	{
+		m_pGrapher = std::make_unique<GrapherMatplotplusplus>();
+		return true;
+	}
+	if (backend == "python")
+	{
+		m_pGrapher = std::make_unique<GrapherPy>();
+		return true;
+	}
+	if (backend == "qt")
+	{
+		std::cout << "Warning: Qt plotting backend not yet integrated" << std::endl;
+		return false;
+	}
+	else
+	{
+		std::cout << "Warning: Unknown plotting backend specified" << std::endl;
+		return false;
+	}
+
+
 }
 
 bool Core::BatchAverages(const std::vector<std::string> sIds)

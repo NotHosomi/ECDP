@@ -3,7 +3,7 @@
 #include <array>
 #include <map>
 #include <utility>
-#include "ErrorBarData.h"
+#include "Plottables.h"
 #include "CsvFile.h"
 #include "EisData.h"
 #include "CvData.h"
@@ -20,8 +20,8 @@ public:
 	T_CvData CalculateCscVals() const;
 	T_CilData CalculateCilVals() const;
 
-	std::array<T_ErrorBarD, 2> GetEisPlot() const;
-	T_ErrorBarD GetCvPlot(const std::vector<std::string>& vExcludes = {}) const;
+	std::array<T_ErrorPlotF, 2> GetEisPlot() const;
+	T_ErrorPlotF GetCvPlot(const std::vector<std::string>& vExcludes = {}) const;
 
 	const std::vector<std::filesystem::path> GetEisFiles() const;
 	const std::vector<std::filesystem::path> GetCvFiles() const;

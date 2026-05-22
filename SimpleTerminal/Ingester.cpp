@@ -10,7 +10,6 @@
 #include "stddev.h"
 #include "CvData.h"
 #include "JsonLoader.h"
-#include "stddev.h"
 
 # define M_PI           3.14159265358979323846
 
@@ -28,7 +27,8 @@ Ingester::Ingester(std::filesystem::path deviceDirectory)
 			colcmd = TERM_RESET;
 			if (path.find("exclude") != std::string::npos || path.find(".txt") == std::string::npos || path.find(".png") != std::string::npos)
 			{
-				colcmd = TERM_MAGENTA;
+				//colcmd = TERM_MAGENTA;
+				continue;
 			}
 			else if (path.find("EIS") != std::string::npos)
 			{
@@ -180,6 +180,7 @@ T_EisData Ingester::ParseEis(const std::vector<std::string>& vKeyVals) const
 		}
 		out.mImpedances.insert({ entry.GetFilename(), keyvals });
 	}
+	// todo: add threshold exclusion to the mean calculation here
 	std::vector<T_Stats> stats(vKeyVals.size(), {});
 	for (int i = 0; i < allKeyvals.size(); ++i)
 	{
@@ -315,7 +316,7 @@ T_CilData Ingester::CalculateCilVals() const
 	return output;
 }
 
-std::array<T_ErrorBarD, 2> Ingester::GetEisPlot() const
+std::array<T_ErrorPlotF, 2> Ingester::GetEisPlot() const
 {
 	std::cout << "Building EIS plot..." << std::flush;
 	std::vector<CsvFile> csvList = readFiles(m_vEisPaths);
@@ -330,10 +331,10 @@ std::array<T_ErrorBarD, 2> Ingester::GetEisPlot() const
 		}
 		return true;
 		});
-	if (csvList.size() == 0) { return { T_ErrorBarD(), T_ErrorBarD() }; }
+	if (csvList.size() == 0) { return { T_ErrorPlotF(), T_ErrorPlotF() }; }
 
-	T_ErrorBarD PointsZ;
-	T_ErrorBarD PointsPhase;
+	T_ErrorPlotF PointsZ;
+	T_ErrorPlotF PointsPhase;
 	for (const auto& freq : csvList[0].GetCol("Frequency (Hz)"))
 	{
 		PointsZ.x.push_back(std::stof(freq));
@@ -387,7 +388,7 @@ struct T_Voltage
 		return static_cast<int>(eDir) < static_cast<int>(other.eDir);
 	}
 };
-T_ErrorBarD Ingester::GetCvPlot(const std::vector<std::string>& vExcludes) const
+T_ErrorPlotF Ingester::GetCvPlot(const std::vector<std::string>& vExcludes) const
 {
 	std::cout << "Building CV plot... " << std::flush;
 	std::vector<std::map<T_Voltage, double>> grossCv;
@@ -448,15 +449,15 @@ T_ErrorBarD Ingester::GetCvPlot(const std::vector<std::string>& vExcludes) const
 	std::map<T_Voltage, T_Stats> stats = stddev(grossCv);
 
 
-	T_ErrorBarD output;
+	T_ErrorPlotF output;
 	for (const auto& eDir : { E_ScanDir::Forward, E_ScanDir::Reverse})
 	{
 		for (const auto& iter : stats)
 		{
 			if (iter.first.eDir != eDir) { continue; }
-			output.x.push_back(iter.first.dVal);
-			output.y.push_back(iter.second.mean);
-			output.err.push_back(iter.second.stddev);
+			output.x.push_back(static_cast<float>(iter.first.dVal));
+			output.y.push_back(static_cast<float>(iter.second.mean));
+			output.err.push_back(static_cast<float>(iter.second.stddev));
 		}
 	}
 	// complete the loop

@@ -12,13 +12,13 @@ Options::Options()
 	else
 	{
 		std::cout << "Failed. Using defaults" << std::endl;
+		m_mOptions.clear();
 	}
 
 	AddOpt({ "demoOpt", "This is an example option", E_OptType::Int, 1 });
 	AddOpt({ "demoOpt2", "This is an example option", E_OptType::Float, 0.5 });
 	AddOpt({ "demoOpt3", "This is an example option", E_OptType::String, "Demo" });
 
-	AddOpt({ "force-replot", "Always generate and render a plot, even if its already exists", E_OptType::Int, 0 });
 
 	AddOpt({ "eis-plot-avrg", "Plot per-device EIS graph", E_OptType::Int, 1 });
 	AddOpt({ "eis-plot-each", "Plot per-electrode EIS graph", E_OptType::Int, 0 });
@@ -29,6 +29,24 @@ Options::Options()
 
 	AddOpt({ "arch-recalc", "Ignore archive entries; recalculate & tabulate values from raw data files", E_OptType::Int, 0 });
 	AddOpt({ "arch-overwrite", "Replace existing archive entries", E_OptType::Int, 0 });
+
+	AddOpt({ "plotter-force-replot", "Always generate and render a plot, even if the output file already exists", E_OptType::Int, 0 });
+	AddOpt({ "plotter-backend", "Which backend to use for plotting <internal/python/qt>", E_OptType::String, "python" });
+	AddOpt({ "plotter-pyscript-eis", "Filename of the EIS plotter script to be ran. Does nothing if backend is not \"python\"", E_OptType::String, "plotter.py" });
+	AddOpt({ "plotter-pyscript-cv", "Filename of the CV plotter script to be ran. Does nothing if backend is not \"python\"", E_OptType::String, "plotter.py" });
+	AddOpt({ "plotter-pyscript-cil", "Filename of the CIL plotter script to be ran. Does nothing if backend is not \"python\"", E_OptType::String, "plotter.py" });
+	AddOpt({ "plotter-hold-temp", "Retain unique temporary plotting files", E_OptType::Int, 1 });
+
+	AddOpt({ "plotter-dpi", "Resolution of the plotter output in dot per inch", E_OptType::Int, 100 });
+	AddOpt({ "plotter-fontsize-title", "Resolution of the plotter output in dot per inch", E_OptType::Int, 14 });
+	AddOpt({ "plotter-fontsize-labels", "Resolution of the plotter output in dot per inch", E_OptType::Int, 12 });
+	AddOpt({ "plotter-fontsize-ticks", "Resolution of the plotter output in dot per inch", E_OptType::Int, 10 });
+
+	AddOpt({ "plotter-eis-ymax", "in ohms", E_OptType::Float, 1000000.0 });
+	AddOpt({ "plotter-eis-ymin", "in ohms", E_OptType::Float, 1000.0 });
+	AddOpt({ "plotter-cv-ymax", "in microamps", E_OptType::Float, 2.0 });
+	AddOpt({ "plotter-cv-ymin", "in microamps", E_OptType::Float, -2.0 });
+
 }
 
 Options& Options::Get()

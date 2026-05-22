@@ -1,6 +1,7 @@
 #pragma once
+#include <memory>
 #include "UserConfig.h"
-#include "Grapher.h"
+#include "GrapherGeneric.h"
 #include "stddev.h"
 #include "Archive.h"
 #include "EisData.h"
@@ -19,6 +20,7 @@ enum E_CmdErr
 	InvalidArgTypes,
 	BadArgs,
 	NoData,
+	BadOptions,
 	Other
 };
 
@@ -48,9 +50,10 @@ private:
 	void PrintCscVals(const T_CvData& tCvData);
 	void PrintCilVals(std::vector<int> vPulseWidths, std::map<int, std::vector<float>> mVals, std::vector<T_Stats> vStats);
 
+	bool LoadGrapher();
 
 	std::filesystem::path m_DataPath;
-	Grapher m_Grapher;
+	std::unique_ptr<GrapherGeneric> m_pGrapher;
 	Archive m_Archive;
 	T_UserConfig m_tUserConfig;
 };
