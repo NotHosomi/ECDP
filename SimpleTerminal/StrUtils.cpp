@@ -70,3 +70,22 @@ std::pair<std::string, std::string> SU::DelimitOnce(const std::string& s, const 
     tokens.second = s.substr(pos + delimiter.length(), s.length());
     return tokens;
 }
+
+std::vector<std::string> SU::DelimitWithQuotes(const std::string& s, const std::string& delimiter)
+{
+    std::vector<std::string> out;
+    std::vector<std::string> quoteDelimit = SU::Delimit(s, "\"");
+    for (int i = 0; i < quoteDelimit.size(); ++i)
+    {
+        if (i % 2 == 0)
+        {
+            std::vector<std::string> temp = SU::Delimit(quoteDelimit[i], delimiter);
+            out.insert(out.end(), temp.begin(), temp.end());
+        }
+        else
+        {
+            out.push_back(quoteDelimit[i]);
+        }
+    }
+    return out;
+}

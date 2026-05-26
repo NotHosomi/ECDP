@@ -1,5 +1,6 @@
 #include "Commands.h"
 #include <iostream>
+#include <fstream>
 #include "Ingester.h"
 #include "StrUtils.h"
 #include "Options.h"
@@ -14,6 +15,8 @@ Commands::Commands(Core* pCore) :
 	m_mCommands.emplace("setopt", std::bind_front(&Commands::SetOpt, this));
 	m_mCommands.emplace("listopts", std::bind_front(&Commands::ListOpts, this));
 	m_mCommands.emplace("saveopts", std::bind_front(&Commands::SaveOpts, this));
+	m_mCommands.emplace("loadopts", std::bind_front(&Commands::LoadOpts, this));
+	m_mCommands.emplace("exec", std::bind_front(&Commands::Exec, this));
 	m_mCommands.emplace("compare", std::bind_front(&Commands::CompareDevices, this));
 	m_mCommands.emplace("average", std::bind_front(&Commands::AverageDevices, this));
 	m_mCommands.emplace("set", std::bind_front(&Commands::SetDataDirectory, this));
@@ -69,41 +72,20 @@ E_CmdErr Commands::SingleDevice(const std::string& args)
 		std::cin.clear();
 	}
 
-	int eModes = Core::kNone;
-	if (mode == "all")
-	{
-		eModes |= (Core::kEis | Core::kCv | Core::kCil);
-	}
-	else if (mode == "eis")
-	{
-		eModes = Core::kEis;
-	}
-	else if (mode == "cv")
-	{
-		eModes = Core::kCv;
-	}
-	else if (mode == "cil")
-	{
-		eModes = Core::kCil;
-	}
-	else
-	{
-		std::cout << "Unclear mode. Use \"Eis\", \"Cv\", \"Cil\" or \"All\"" << std::endl;
-		return E_CmdErr::BadArgs;
-	}
-	return m_pCore->Run(deviceId, static_cast<Core::E_DataTypes>(eModes));
+	return m_pCore->Run(deviceId, ParseMode(mode));
 }
 
 E_CmdErr Commands::MultiDevice(const std::string& vArgs)
 {
-	std::vector<std::string> deviceIds = SU::Delimit(vArgs, ", ");
-	if (deviceIds.size() <= 1)
+	std::vector<std::string> deviceIds = SU::Delimit(vArgs, " ");
+	Core::E_DataTypes mode = ParseMode(deviceIds[0]);
+	if (mode != Core::E_DataTypes::kNone)
 	{
-		deviceIds = SU::Delimit(vArgs, ",");
-		if (deviceIds.size() <= 1)
-		{
-			deviceIds = SU::Delimit(vArgs, " ");
-		}
+		deviceIds.erase(deviceIds.begin());
+	}
+	else
+	{
+		mode = Core::E_DataTypes::kAll;
 	}
 	E_CmdErr sumEc = E_CmdErr::None;
 	for (const auto& str : deviceIds)
@@ -115,6 +97,11 @@ E_CmdErr Commands::MultiDevice(const std::string& vArgs)
 		}
 	}
 	return sumEc;
+}
+
+E_CmdErr Commands::Plot(const std::string& sArgs)
+{
+	return E_CmdErr();
 }
 
 E_CmdErr Commands::CompareDevices(const std::string& vArgs)
@@ -215,7 +202,50 @@ E_CmdErr Commands::ListOpts(const std::string& vArgs)
 
 E_CmdErr Commands::SaveOpts(const std::string& vArgs)
 {
-	return Options::Get().SaveOpts() ? E_CmdErr::None : E_CmdErr::Other;
+	bool succcess;
+	if (vArgs == "")
+	{
+		succcess = Options::Get().SaveOpts();
+	}
+	else
+	{
+		succcess = Options::Get().SaveOpts(vArgs);
+	}
+	return succcess ? E_CmdErr::None : E_CmdErr::Other;
+}
+
+E_CmdErr Commands::LoadOpts(const std::string& vArgs)
+{
+	bool succcess;
+	if (vArgs == "")
+	{
+		std::cout << "File not specified, loading default" << std::endl;
+		succcess = Options::Get().LoadOpts();
+	}
+	else
+	{
+		succcess = Options::Get().LoadOpts(vArgs);
+	}
+	return succcess ? E_CmdErr::None : E_CmdErr::Other;
+}
+
+E_CmdErr Commands::Exec(const std::string& vArgs)
+{
+	std::string path = "./scripts/" + vArgs + ".txt";
+	std::ifstream file(path);
+	if (!file.is_open())
+	{
+		std::cout << "Could not open " + path << std::endl;
+		return E_CmdErr::BadArgs;
+	}
+	for (std::string line; std::getline(file, line); )
+	{
+		SU::ToLower(line);
+		std::pair<std::string, std::string> input = SU::DelimitOnce(line, " ");
+		TryCommand(input.first, input.second);
+	}
+	file.close();
+	return E_CmdErr();
 }
 
 E_CmdErr Commands::Help(const std::string& vArgs)
@@ -229,9 +259,40 @@ E_CmdErr Commands::Help(const std::string& vArgs)
 	std::cout << " - GetOpt <optionName>\t\tPrints the value of the specified option" << std::endl;
 	std::cout << " - SetOpt <optionName> <value>\t\tSets the value of the specified option" << std::endl;
 	std::cout << " - ListOpts\t\t\t\t\t\tLists all settings and their values" << std::endl;
-	std::cout << " - SaveOpts\t\t\t\t\t\tSaves your current options for next time" << std::endl;
+	std::cout << " - SaveOpts <filename>\t\t\t\t\t\tSaves the current options. Filename" << std::endl;
+	std::cout << " - LoadOpts\t\t\t\t\t\tSaves your current options for next time" << std::endl;
+	std::cout << " - Exec <filename>\t\t\t\t\t\t\tRuns the commands contained in the specified file" << std::endl;
 	std::cout << " - Help\t\t\t\t\t\t\tLists available commands" << std::endl;
 	std::cout << " - Quit\t\t\t\t\t\t\tterminates the program" << std::endl;
 
 	return E_CmdErr::None;
+}
+
+E_CmdErr Commands::Quit(const std::string& vArgs)
+{
+	std::cout << "Cannot quit during scripted execution" << std::endl;
+	return E_CmdErr::BadArgs;
+}
+
+Core::E_DataTypes Commands::ParseMode(const std::string& sMode)
+{
+	// todo: split sMode and check the result for each type
+	int eModes = Core::kNone;
+	if (sMode == "all")
+	{
+		eModes |= Core::E_DataTypes(Core::kEis | Core::kCv | Core::kCil);
+	}
+	else if (sMode == "eis")
+	{
+		eModes |= Core::kEis;
+	}
+	else if (sMode == "cv")
+	{
+		eModes |= Core::kCv;
+	}
+	else if (sMode == "cil")
+	{
+		eModes |= Core::kCil;
+	}
+	return Core::E_DataTypes(eModes);
 }

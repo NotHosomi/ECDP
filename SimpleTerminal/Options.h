@@ -39,7 +39,8 @@ public:
 	bool SetOpt(const std::string& sOptName, double val);
 	bool SetOpt(const std::string& sOptName, const std::string& val);
 
-	bool SaveOpts();
+	bool SaveOpts(const std::string& filename = "default");
+	bool LoadOpts(const std::string& filename = "default");
 
 	const std::map<std::string, T_Opt>& Data();
 
@@ -48,8 +49,8 @@ private:
 	template <typename T>
 	bool SetOpt(const std::string& sOptName, T val, E_OptType eType);
 
-	bool Serialise();
-	bool Deserialise();
+	bool Serialise(const std::string& filename);
+	bool Deserialise(const std::string& filename);
 
 	std::map<std::string, T_Opt> m_mOptions;
 };

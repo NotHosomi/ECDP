@@ -5,7 +5,7 @@
 Options::Options()
 {
 	std::cout << "Loading options..." << std::flush;
-	if (Deserialise())
+	if (LoadOpts())
 	{
 		std::cout << "Done" << std::endl;
 	}
@@ -14,11 +14,6 @@ Options::Options()
 		std::cout << "Failed. Using defaults" << std::endl;
 		m_mOptions.clear();
 	}
-
-	AddOpt({ "demoOpt", "This is an example option", E_OptType::Int, 1 });
-	AddOpt({ "demoOpt2", "This is an example option", E_OptType::Float, 0.5 });
-	AddOpt({ "demoOpt3", "This is an example option", E_OptType::String, "Demo" });
-
 
 	AddOpt({ "eis-plot-avrg", "Plot per-device EIS graph", E_OptType::Int, 1 });
 	AddOpt({ "eis-plot-each", "Plot per-electrode EIS graph", E_OptType::Int, 0 });
@@ -32,9 +27,9 @@ Options::Options()
 
 	AddOpt({ "plotter-force-replot", "Always generate and render a plot, even if the output file already exists", E_OptType::Int, 0 });
 	AddOpt({ "plotter-backend", "Which backend to use for plotting <internal/python/qt>", E_OptType::String, "python" });
-	AddOpt({ "plotter-pyscript-eis", "Filename of the EIS plotter script to be ran. Does nothing if backend is not \"python\"", E_OptType::String, "plotter.py" });
-	AddOpt({ "plotter-pyscript-cv", "Filename of the CV plotter script to be ran. Does nothing if backend is not \"python\"", E_OptType::String, "plotter.py" });
-	AddOpt({ "plotter-pyscript-cil", "Filename of the CIL plotter script to be ran. Does nothing if backend is not \"python\"", E_OptType::String, "plotter.py" });
+	AddOpt({ "plotter-pyscript-eis", "Filename of the EIS plotter script in /scripts/. Does nothing if backend is not \"python\"", E_OptType::String, "plotter.py" });
+	AddOpt({ "plotter-pyscript-cv", "Filename of the CV plotter script in /scripts/. Does nothing if backend is not \"python\"", E_OptType::String, "plotter.py" });
+	AddOpt({ "plotter-pyscript-cil", "Filename of the CIL plotter script in /scripts/. Does nothing if backend is not \"python\"", E_OptType::String, "plotter.py" });
 	AddOpt({ "plotter-hold-temp", "Retain unique temporary plotting files", E_OptType::Int, 1 });
 
 	AddOpt({ "plotter-dpi", "Resolution of the plotter output in dot per inch", E_OptType::Int, 100 });
@@ -80,14 +75,26 @@ bool Options::SetOpt(const std::string& sOptName, const std::string& val)
 	return SetOpt(sOptName, val, E_OptType::String);
 }
 
-bool Options::SaveOpts()
+bool Options::SaveOpts(const std::string& sFilename)
 {
-	if (!Serialise())
+	std::filesystem::create_directory("options");
+	if (!Serialise("./options/" + sFilename + ".json"))
 	{
 		std::cout << "Failed to save options" << std::endl;
 		return false;
 	}
 	std::cout << "Saved" << std::endl;
+	return true;
+}
+
+bool Options::LoadOpts(const std::string& sFilename)
+{
+	if (!Deserialise("./options/" + sFilename + ".json"))
+	{
+		std::cout << "Failed to load options" << std::endl;
+		return false;
+	}
+	std::cout << "Loaded options" << std::endl;
 	return true;
 }
 
@@ -114,7 +121,7 @@ struct T_JsonOpt
 	NLOHMANN_DEFINE_TYPE_INTRUSIVE(T_JsonOpt, name, desc, type, value);
 };
 
-bool Options::Serialise()
+bool Options::Serialise(const std::string& sFilename)
 {
 	std::vector<T_JsonOpt> vec;
 	for (const auto& [key, opt] : m_mOptions)
@@ -136,14 +143,14 @@ bool Options::Serialise()
 		}
 		vec.emplace_back(jopt);
 	}
-	return SaveJson("./options.json", vec);
+	return SaveJson(sFilename, vec);
 }
 
-bool Options::Deserialise()
+bool Options::Deserialise(const std::string& sFilename)
 {
 	std::map<std::string, T_Opt> temp;
 	std::vector<T_JsonOpt> vec;
-	if (!LoadJson("./options.json", vec)) { return false; }
+	if (!LoadJson(sFilename, vec)) { return false; }
 	for (const auto& jopt : vec)
 	{
 		T_Opt opt;
@@ -166,7 +173,7 @@ bool Options::Deserialise()
 		}
 		catch(std::invalid_argument e)
 		{
-			std::cout << "options.json corrupted value at \"name\": \"" << jopt.name << "\"..." << std::flush;
+			std::cout << sFilename << " has corrupted value at \"name\": \"" << jopt.name << "\"..." << std::flush;
 			return false;
 		}
 		temp.insert({ opt.sName, opt });

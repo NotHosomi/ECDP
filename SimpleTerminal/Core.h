@@ -34,7 +34,8 @@ public:
 		kNone = 0,
 		kEis = 1,
 		kCv = 1 << 1,
-		kCil = 1 << 2
+		kCil = 1 << 2,
+		kAll = kEis | kCv | kCil
 	};
 	E_CmdErr Run(const std::string sDeviceId, E_DataTypes eModes);
 	bool BatchAverages(const std::vector<std::string> sIds);
