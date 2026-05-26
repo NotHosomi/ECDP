@@ -51,6 +51,6 @@ T_Stats PooledStddev(const std::vector<T_StatGroup> vGroups)
         double betweenGroup = g.n * std::pow(g.mean - out.mean, 2);
         numerator += withinGroup + betweenGroup;
     }
-    out.stddev = std::sqrt(numerator / out.samples - vGroups.size());
+    out.stddev = std::sqrt(numerator / (out.samples - vGroups.size()));
     return out;
 }

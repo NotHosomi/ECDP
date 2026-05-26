@@ -46,7 +46,7 @@ private:
 	T_CvData Cv(T_DeviceData& tDeviceData, const Ingester& ingest, const T_CvConfig& tUserConfig);
 	T_CilData Cil(T_DeviceData& tDeviceData, const Ingester& ingest, const T_CilConfig& tUserConfig);
 
-	void PrintEisVals(const T_EisData& tEisData, const T_EisConfig& tConfig); // todo
+	void PrintEisVals(const T_EisData& tEisData, const T_EisConfig& tConfig);
 	void PrintCscVals(const T_CvData& tCvData);
 	void PrintCilVals(std::vector<int> vPulseWidths, std::map<int, std::vector<float>> mVals, std::vector<T_Stats> vStats);
 
