@@ -109,6 +109,49 @@ E_CmdErr Core::Run(const std::string sDeviceId, E_DataTypes eModes)
 	return E_CmdErr::None;
 }
 
+E_CmdErr Core::Plot(const std::string sDeviceId, E_DataTypes eModes)
+{
+	T_DeviceData data = m_Archive.GetDevice(sDeviceId);
+	if (data.sDeviceId == "")
+	{
+		std::cout << "Device must be ingested before plotting" << std::endl;
+	}
+	if (eModes & E_DataTypes::kEis)
+	{
+		if (!data.tEis.has_value())
+		{
+			std::cout << "Device hasn't ingested EIS" << std::endl;
+		}
+		else
+		{
+			PlotEis(data);
+		}
+	}
+	if (eModes & E_DataTypes::kCv)
+	{
+		if (!data.tCv.has_value())
+		{
+			std::cout << "Device hasn't ingested CIL" << std::endl;
+		}
+		else
+		{
+			PlotCv(data);
+		}
+	}
+	if (eModes & E_DataTypes::kCil)
+	{
+		if (!data.tCil.has_value())
+		{
+			std::cout << "Device hasn't ingested CIL" << std::endl;
+		}
+		else
+		{
+			PlotCil(data);
+		}
+	}
+	return E_CmdErr::None;
+}
+
 T_EisData Core::Eis(T_DeviceData& tDeviceData, const Ingester& ingest, const T_EisConfig& tConfig)
 {
 	// EIS
@@ -134,19 +177,6 @@ T_EisData Core::Eis(T_DeviceData& tDeviceData, const Ingester& ingest, const T_E
 	// EIS Table
 	PrintEisVals(tDeviceData.tEis.value(), tConfig);
 
-	// EIS Plot
-	if (Options::Get().GetOpt<bool>("eis-plot-avrg"))
-	{
-		std::array<T_ErrorPlotF, 2> EisData = ingest.GetEisPlot();
-		m_pGrapher->EisAverage(tDeviceData.sDeviceId, EisData[0], EisData[1]);
-	}
-	if (Options::Get().GetOpt<bool>("eis-plot-each"))
-	{
-		for (const auto [key, data] : tDeviceData.tEis.value().mRaw)
-		{
-			m_pGrapher->EisSingle(tDeviceData.sDeviceId, key, data);
-		}
-	}
 	return tDeviceData.tEis.value();
 }
 
@@ -175,20 +205,7 @@ T_CvData Core::Cv(T_DeviceData& tDeviceData, const Ingester& ingest, const T_CvC
 	//std::vector<std::string> cvExcludes;
 	PrintCscVals(tDeviceData.tCv.value());
 
-	// Plot aggregate CV
-	if (tConfig.plotCv)
-	{
-		T_ErrorPlotF tCvPlot = ingest.GetCvPlot();
-		m_pGrapher->CvAverage(tDeviceData.sDeviceId, tCvPlot);
-	}
-	// Plot each CV
-	if (Options::Get().GetOpt<bool>("cv-plot-each"))
-	{
-		for (const auto& [key, data] : tDeviceData.tCv.value().mElectrodes)
-		{
-			m_pGrapher->CvSingle(tDeviceData.sDeviceId, key, data);
-		}
-	}
+	PlotCv(tDeviceData);
 	return tDeviceData.tCv.value();
 }
 
@@ -315,6 +332,220 @@ void Core::PrintCilVals(std::vector<int> vPulseWidths, std::map<int, std::vector
 	cilTable.AddRow(avrgRowText);
 	cilTable.AddRow(stddevRowText);
 	cilTable.Print(TERM_YELLOW);
+}
+
+void Core::PlotEis(T_DeviceData& tDeviceData)
+{
+	if (!tDeviceData.tEis.has_value())
+	{
+		std::cout << "No EIS data" << std::endl;
+		return;
+	}
+	// EIS Plot
+	if (Options::Get().GetOpt<bool>("eis-plot-avrg"))
+	{
+		std::array<T_ErrorPlotF, 2> EisData = BuildEisPlot(tDeviceData.tEis.value());
+		m_pGrapher->EisAverage(tDeviceData.sDeviceId, EisData[0], EisData[1]);
+	}
+	else
+	{
+		std::cout << "Skipping average EIS plot (eis-plot-avrg=0)" << std::endl;
+	}
+	if (Options::Get().GetOpt<bool>("eis-plot-each"))
+	{
+		for (const auto [key, data] : tDeviceData.tEis.value().mRaw)
+		{
+			m_pGrapher->EisSingle(tDeviceData.sDeviceId, key, data);
+		}
+	}
+	else
+	{
+		std::cout << "Skipping per-electrode EIS plots (eis-plot-each=0)" << std::endl;
+	}
+}
+
+void Core::PlotCv(T_DeviceData& tDeviceData)
+{
+	if (!tDeviceData.tCv.has_value())
+	{
+		std::cout << "No CV data" << std::endl;
+		return;
+	}
+
+	// Plot aggregate CV
+	if (Options::Get().GetOpt<bool>("cv-plot-avrg"))
+	{
+		T_ErrorPlotF tCvPlot = BuildCvPlot(tDeviceData.tCv.value());
+		m_pGrapher->CvAverage(tDeviceData.sDeviceId, tCvPlot);
+	}
+	// Plot each CV
+	if (Options::Get().GetOpt<bool>("cv-plot-each"))
+	{
+		for (const auto& [key, data] : tDeviceData.tCv.value().mElectrodes)
+		{
+			m_pGrapher->CvSingle(tDeviceData.sDeviceId, key, data);
+		}
+	}
+}
+
+void Core::PlotCil(T_DeviceData& tDeviceData)
+{
+}
+
+std::array<T_ErrorPlotF, 2> Core::BuildEisPlot(const T_EisData& tData)
+{
+	std::cout << "Building EIS plot..." << std::flush;
+	std::vector<std::string> excludeElectrodes;
+	for (const auto& [electrode, data] : tData.mRaw)
+	{
+		for (const auto& impedence : data.vImpedances)
+		{
+			if (impedence > Options::Get().GetOpt<float>("eis-impedence-limit"));
+			{
+				excludeElectrodes.push_back(electrode);
+				break;
+			}
+		}
+	}
+	
+	if (excludeElectrodes.size() >= tData.mRaw.size() - 1)
+	{
+		excludeElectrodes.clear();
+	}
+
+
+	T_ErrorPlotF PointsZ;
+	T_ErrorPlotF PointsPhase;
+	PointsZ.x.insert(PointsZ.x.end(), tData.mRaw.begin()->second.vFrequencies.begin(), tData.mRaw.begin()->second.vFrequencies.end());
+	PointsPhase.x.insert(PointsPhase.x.end(), tData.mRaw.begin()->second.vFrequencies.begin(), tData.mRaw.begin()->second.vFrequencies.end());
+
+	for (int i = 0; i < tData.mRaw.begin()->second.vImpedances.size(); ++i)
+	{
+		float avrgZY = 0;
+		std::vector<double> rowZVals;
+		std::vector<double> rowPhaseVals;
+		for (const auto& [key, data] : tData.mRaw)
+		{
+			if (std::find(excludeElectrodes.begin(), excludeElectrodes.end(), key) != excludeElectrodes.end())
+			{
+				continue;
+			}
+			rowZVals.push_back(data.vImpedances[i]);
+			rowPhaseVals.push_back(data.vPhases[i]);
+		}
+		T_Stats rowZStats = stddev(rowZVals);
+		PointsZ.y.push_back(rowZStats.mean);
+		PointsZ.err.push_back(rowZStats.stddev);
+		T_Stats rowPhaseStats = stddev(rowPhaseVals);
+		PointsPhase.y.push_back(rowPhaseStats.mean);
+		PointsPhase.err.push_back(rowPhaseStats.stddev);
+	}
+	std::cout << " Done" << std::endl;
+	return { PointsZ, PointsPhase };
+}
+
+enum E_ScanDir
+{
+	Forward,
+	Reverse
+};
+struct T_Voltage
+{
+	double dVal;
+	E_ScanDir eDir;
+	bool operator<(const T_Voltage& other) const
+	{
+		if (static_cast<int>(eDir) == static_cast<int>(other.eDir))
+		{
+			if (eDir == E_ScanDir::Forward)
+			{
+				return dVal < other.dVal;
+			}
+			else
+			{
+				return dVal > other.dVal;
+			}
+		}
+		return static_cast<int>(eDir) < static_cast<int>(other.eDir);
+	}
+};
+T_ErrorPlotF Core::BuildCvPlot(const T_CvData& tData)
+{
+	std::cout << "Building CV plot... " << std::flush;
+	std::vector<std::map<T_Voltage, double>> grossCv;
+	for (const auto& [electrode, data] : tData.mElectrodes)
+	{
+		//if (std::find(vExcludes.begin(), vExcludes.end(), csv.GetFilename()) == vExcludes.end())
+		//{
+		//	std::cout << "Skipping " << csv.GetFilename() << std::endl;
+		//	continue;
+		//}
+		if (data.vLoops.size() == 0) { continue; }
+
+		// average per loop
+		std::map<T_Voltage, double>& loopAvrg = grossCv.emplace_back();	// todo: this doesn't work, cuz it looses the ORDER
+		std::map<T_Voltage, int> binInstances;
+		for (int i = 1; i < data.vLoops.size(); ++i)
+		{
+			const T_CvLoop& loop = data.vLoops[i];
+			for (int j = 0; j < loop.vVoltages.size(); ++j)
+			{
+				T_Voltage key;
+				// round to 0.0X volts
+				double roundedVal = std::round(loop.vVoltages[j] * 100) / 100;
+				key.dVal = roundedVal;
+				if (j == 0)
+				{
+					key.eDir = E_ScanDir::Forward;
+				}
+				else
+				{
+					key.eDir = loop.vVoltages[j] > loop.vVoltages[j - 1] ? E_ScanDir::Forward : E_ScanDir::Reverse;
+				}
+				if (!loopAvrg.contains(key))
+				{
+					loopAvrg.insert({ key, loop.vCurrents[j] });
+					binInstances.insert({ key, 1 });
+				}
+				else
+				{
+					loopAvrg.at(key) += loop.vCurrents[j];
+					binInstances.at(key) += 1;
+				}
+			}
+			for (auto& [key, val] : loopAvrg)
+			{
+				val /= binInstances.at(key);
+			}
+		}
+	}
+	//if (grossCv.size() == 0)
+	//{
+	//	std::cout << "Not enough valid CV data to plot" << std::endl;
+	//	return {};
+	//}
+
+	// average across files, with stddev
+	std::map<T_Voltage, T_Stats> stats = stddev(grossCv);
+
+
+	T_ErrorPlotF output;
+	for (const auto& eDir : { E_ScanDir::Forward, E_ScanDir::Reverse })
+	{
+		for (const auto& iter : stats)
+		{
+			if (iter.first.eDir != eDir) { continue; }
+			output.x.push_back(static_cast<float>(iter.first.dVal));
+			output.y.push_back(static_cast<float>(iter.second.mean));
+			output.err.push_back(static_cast<float>(iter.second.stddev));
+		}
+	}
+	// complete the loop
+	output.x.push_back(output.x.front());
+	output.y.push_back(output.y.front());
+	output.err.push_back(output.err.front());
+	std::cout << "Done" << std::endl;
+	return output;
 }
 
 bool Core::LoadGrapher()

@@ -39,7 +39,7 @@ private:
 	E_CmdErr Help(const std::string& sArgs);
 	E_CmdErr Quit(const std::string& sArgs);
 
-	Core::E_DataTypes ParseMode(const std::string& sMode);
+	Core::E_DataTypes ParseMode(const std::string& sMode, bool required=false);
 
 	std::map<std::string, std::function<E_CmdErr(const std::string&)>> m_mCommands;
 

@@ -15,6 +15,10 @@ Options::Options()
 		m_mOptions.clear();
 	}
 
+	AddOpt({ "ingest-verbosity", "The level of information printed by the ingester <0/1/2>", E_OptType::Int, 0 });
+
+	AddOpt({ "eis-impedence-limit", "The threshold at which electrodes are flagged as non-functional", E_OptType::Float, 25000.0 });
+
 	AddOpt({ "eis-plot-avrg", "Plot per-device EIS graph", E_OptType::Int, 1 });
 	AddOpt({ "eis-plot-each", "Plot per-electrode EIS graph", E_OptType::Int, 0 });
 	AddOpt({ "cv-plot-avrg", "Plot per-device CV loop", E_OptType::Int, 1 });

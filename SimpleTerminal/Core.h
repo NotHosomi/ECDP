@@ -38,6 +38,7 @@ public:
 		kAll = kEis | kCv | kCil
 	};
 	E_CmdErr Run(const std::string sDeviceId, E_DataTypes eModes);
+	E_CmdErr Plot(const std::string sDeviceId, E_DataTypes eModes);
 	bool BatchAverages(const std::vector<std::string> sIds);
 
 	T_UserConfig& UserConfig();
@@ -50,6 +51,14 @@ private:
 	void PrintEisVals(const T_EisData& tEisData, const T_EisConfig& tConfig);
 	void PrintCscVals(const T_CvData& tCvData);
 	void PrintCilVals(std::vector<int> vPulseWidths, std::map<int, std::vector<float>> mVals, std::vector<T_Stats> vStats);
+
+	void PlotEis(T_DeviceData& tDeviceData);
+	void PlotCv(T_DeviceData& tDeviceData);
+	void PlotCil(T_DeviceData& tDeviceData);
+
+	std::array<T_ErrorPlotF, 2> BuildEisPlot(const T_EisData& tData);
+	T_ErrorPlotF BuildCvPlot(const T_CvData& tData);
+	T_ErrorPlotF BuildCilPlot(const T_CilData& tData);
 
 	bool LoadGrapher();
 

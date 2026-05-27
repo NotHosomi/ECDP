@@ -11,6 +11,7 @@ Commands::Commands(Core* pCore) :
 {
 	m_mCommands.emplace("dev", std::bind_front(&Commands::SingleDevice, this));
 	m_mCommands.emplace("multi", std::bind_front(&Commands::MultiDevice, this));
+	m_mCommands.emplace("plot", std::bind_front(&Commands::Plot, this));
 	m_mCommands.emplace("getopt", std::bind_front(&Commands::GetOpt, this));
 	m_mCommands.emplace("setopt", std::bind_front(&Commands::SetOpt, this));
 	m_mCommands.emplace("listopts", std::bind_front(&Commands::ListOpts, this));
@@ -21,6 +22,7 @@ Commands::Commands(Core* pCore) :
 	m_mCommands.emplace("average", std::bind_front(&Commands::AverageDevices, this));
 	m_mCommands.emplace("set", std::bind_front(&Commands::SetDataDirectory, this));
 	m_mCommands.emplace("help", std::bind_front(&Commands::Help, this));
+	m_mCommands.emplace("quit", std::bind_front(&Commands::Quit, this));
 
 }
 
@@ -101,6 +103,18 @@ E_CmdErr Commands::MultiDevice(const std::string& vArgs)
 
 E_CmdErr Commands::Plot(const std::string& sArgs)
 {
+	std::pair<std::string, std::string> split = SU::DelimitOnce(sArgs, " ");
+	Core::E_DataTypes mode = ParseMode(split.first, true);
+	if (mode == Core::E_DataTypes::kNone)
+	{
+		std::cout << "Please specify a plot type <Eis/Cv/Cil/All>" << std::endl;
+		return E_CmdErr::BadArgs;
+	}
+	std::vector<std::string> devices = SU::Delimit(split.second, " ");
+	for (const auto& dev : devices)
+	{
+		m_pCore->Plot(split.second, mode);
+	}
 	return E_CmdErr();
 }
 
@@ -254,6 +268,7 @@ E_CmdErr Commands::Help(const std::string& vArgs)
 	std::cout << " - <deviceId>\t\t\t\t\t\tParses EIS, CV, and CIL for the specified device" << std::endl;
 	std::cout << " - Dev <Eis/Cv/Cil/All> <deviceId>\t\t\tParses data for the specified device" << std::endl;
 	std::cout << " - Multi <Eis/Cv/Cil/All> <deviceId> <deviceId> ...\tParses data for each of the devices specified" << std::endl;
+	std::cout << " - Plot <Eis/Cv/Cil/All> <deviceId>\t\t\tPlots data for the specified device" << std::endl;
 	std::cout << " - Compare <Eis/Cv/Cil/All> <deviceId> <deviceId> ...\tPlots multiple devices onto shared graph" << std::endl;
 	std::cout << " - Average <Eis/Cv/Cil/All> <deviceId> <deviceId> ...\tParses EIS, CV, and CIL for each of the devices specified" << std::endl;
 	std::cout << " - GetOpt <optionName>\t\tPrints the value of the specified option" << std::endl;
@@ -274,25 +289,42 @@ E_CmdErr Commands::Quit(const std::string& vArgs)
 	return E_CmdErr::BadArgs;
 }
 
-Core::E_DataTypes Commands::ParseMode(const std::string& sMode)
+Core::E_DataTypes Commands::ParseMode(const std::string& sMode, bool bRequired)
 {
 	// todo: split sMode and check the result for each type
+	std::vector<std::string> vModes = SU::Delimit(sMode, ",");
 	int eModes = Core::kNone;
-	if (sMode == "all")
-	{
-		eModes |= Core::E_DataTypes(Core::kEis | Core::kCv | Core::kCil);
-	}
-	else if (sMode == "eis")
+	if (std::any_of(vModes.begin(), vModes.end(), [](const std::string& s){return s == "eis";}))
 	{
 		eModes |= Core::kEis;
 	}
-	else if (sMode == "cv")
+	if (std::any_of(vModes.begin(), vModes.end(), [](const std::string& s) {return s == "cv";}))
 	{
 		eModes |= Core::kCv;
 	}
-	else if (sMode == "cil")
+	if (std::any_of(vModes.begin(), vModes.end(), [](const std::string& s) {return s == "cil";}))
 	{
 		eModes |= Core::kCil;
+	}
+	if (std::any_of(vModes.begin(), vModes.end(), [](const std::string& s) {return s == "cil";}))
+	{
+		eModes = Core::kAll;
+	}
+	if (eModes == Core::E_DataTypes::kNone && !bRequired)
+	{
+		eModes = Core::kAll;
+	}
+	if (std::any_of(vModes.begin(), vModes.end(), [](const std::string& s) {return s == "!eis";}))
+	{
+		eModes &= ~Core::kEis;
+	}
+	if (std::any_of(vModes.begin(), vModes.end(), [](const std::string& s) {return s == "!cv";}))
+	{
+		eModes &= ~Core::kCv;
+	}
+	if (std::any_of(vModes.begin(), vModes.end(), [](const std::string& s) {return s == "!cil";}))
+	{
+		eModes &= ~Core::kCil;
 	}
 	return Core::E_DataTypes(eModes);
 }

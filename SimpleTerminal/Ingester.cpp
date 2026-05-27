@@ -10,12 +10,17 @@
 #include "stddev.h"
 #include "CvData.h"
 #include "JsonLoader.h"
+#include "Options.h"
 
 # define M_PI           3.14159265358979323846
 
 Ingester::Ingester(std::filesystem::path deviceDirectory)
 {
-	std::cout << "Files found..." << std::endl;
+	int verbosity = Options::Get().GetOpt<int>("ingest-verbosity");
+	if (verbosity > 0)
+	{
+		std::cout << "Files found..." << std::endl;
+	}
 	std::string path;
 	std::string colcmd;
 	std::string printPath;
@@ -27,8 +32,14 @@ Ingester::Ingester(std::filesystem::path deviceDirectory)
 			colcmd = TERM_RESET;
 			if (path.find("exclude") != std::string::npos || path.find(".txt") == std::string::npos || path.find(".png") != std::string::npos)
 			{
-				//colcmd = TERM_MAGENTA;
-				continue;
+				if (verbosity == 2)
+				{
+					colcmd = TERM_MAGENTA;
+				}
+				else
+				{
+					continue;
+				}
 			}
 			else if (path.find("EIS") != std::string::npos)
 			{
@@ -55,7 +66,10 @@ Ingester::Ingester(std::filesystem::path deviceDirectory)
 				colcmd = TERM_BOLDWHITE;
 			}
 			path.erase(0, deviceDirectory.string().length());
-			std::cout << TERM_RESET << " - " << colcmd << path << std::endl;
+			if (verbosity > 0)
+			{
+				std::cout << TERM_RESET << " - " << colcmd << path << std::endl;
+			}
 		}
 		std::cout << TERM_RESET;
 	}
@@ -313,158 +327,6 @@ T_CilData Ingester::CalculateCilVals() const
 		output.vCilStats.push_back(stddev(cilsPerPulseWidth));
 		output.vCilStatsNormalised.push_back(stddev(cilsNormPerPulseWidth));
 	}	
-	return output;
-}
-
-std::array<T_ErrorPlotF, 2> Ingester::GetEisPlot() const
-{
-	std::cout << "Building EIS plot..." << std::flush;
-	std::vector<CsvFile> csvList = readFiles(m_vEisPaths);
-
-	std::erase_if(csvList, [](const CsvFile& data) {
-		for (int i = 0; i < data.GetCol(0).size(); ++i)
-		{
-			if (data.GetCol("Frequency (Hz)")[i] == "1000")
-			{
-				return std::atof(data.GetCol("Z (\xCE\xA9)")[i].c_str()) >= 20000; // todo: use opts or user config here
-			}
-		}
-		return true;
-		});
-	if (csvList.size() == 0) { return { T_ErrorPlotF(), T_ErrorPlotF() }; }
-
-	T_ErrorPlotF PointsZ;
-	T_ErrorPlotF PointsPhase;
-	for (const auto& freq : csvList[0].GetCol("Frequency (Hz)"))
-	{
-		PointsZ.x.push_back(std::stof(freq));
-		PointsPhase.x.push_back(-std::stof(freq));
-	}
-
-	for (int rowindex = 0; rowindex < csvList[0].GetCol(0).size(); ++rowindex)
-	{
-		float avrgZY = 0;
-		std::vector<double> rowZVals;
-		std::vector<double> rowPhaseVals;
-		float avrgPhaseY = 0;
-		for (int fileindex = 0; fileindex < csvList.size(); ++fileindex)
-		{
-			rowZVals.push_back(std::stof(csvList[fileindex].GetCol("Z (\xCE\xA9)")[rowindex]));
-			rowPhaseVals.push_back(-std::stof(csvList[fileindex].GetCol("-Phase (\xC2\xB0)")[rowindex]));
-		}
-		T_Stats rowZStats = stddev(rowZVals);
-		PointsZ.y.push_back(rowZStats.mean);
-		PointsZ.err.push_back(rowZStats.stddev);
-		T_Stats rowPhaseStats = stddev(rowPhaseVals);
-		PointsPhase.y.push_back(rowPhaseStats.mean);
-		PointsPhase.err.push_back(rowPhaseStats.stddev);
-	}
-	std::cout << " Done" << std::endl;
-	return { PointsZ, PointsPhase };
-}
-
-enum E_ScanDir
-{
-	Forward,
-	Reverse
-};
-struct T_Voltage
-{
-	double dVal;
-	E_ScanDir eDir;
-	bool operator<(const T_Voltage& other) const
-	{
-		if (static_cast<int>(eDir) == static_cast<int>(other.eDir))
-		{
-			if (eDir == E_ScanDir::Forward)
-			{
-				return dVal < other.dVal;
-			}
-			else
-			{
-				return dVal > other.dVal;
-			}
-		}
-		return static_cast<int>(eDir) < static_cast<int>(other.eDir);
-	}
-};
-T_ErrorPlotF Ingester::GetCvPlot(const std::vector<std::string>& vExcludes) const
-{
-	std::cout << "Building CV plot... " << std::flush;
-	std::vector<std::map<T_Voltage, double>> grossCv;
-	for (const auto& csv : readFiles(m_vCvPaths))
-	{
-		//if (std::find(vExcludes.begin(), vExcludes.end(), csv.GetFilename()) == vExcludes.end())
-		//{
-		//	std::cout << "Skipping " << csv.GetFilename() << std::endl;
-		//	continue;
-		//}
-		T_CvElectrodeData tData = parseCvFile(csv);
-		if (tData.vLoops.size() == 0) { continue; }
-
-		// average per loop
-		std::map<T_Voltage, double>& loopAvrg = grossCv.emplace_back();	// todo: this doesn't work, cuz it looses the ORDER
-		std::map<T_Voltage, int> binInstances;
-		for (int i = 1; i < tData.vLoops.size(); ++i)
-		{
-			const T_CvLoop& loop = tData.vLoops[i];
-			for (int j = 0; j < loop.vVoltages.size(); ++j)
-			{
-				T_Voltage key;
-				// round to 0.0X volts
-				double roundedVal = std::round(loop.vVoltages[j] * 100) / 100;
-				key.dVal = roundedVal;
-				if (j == 0)
-				{
-					key.eDir = E_ScanDir::Forward;
-				}
-				else
-				{
-					key.eDir = loop.vVoltages[j] > loop.vVoltages[j - 1] ? E_ScanDir::Forward : E_ScanDir::Reverse;
-				}
-				if (!loopAvrg.contains(key))
-				{
-					loopAvrg.insert({ key, loop.vCurrents[j]});
-					binInstances.insert({ key, 1 });
-				}
-				else
-				{
-					loopAvrg.at(key) += loop.vCurrents[j];
-					binInstances.at(key) += 1;
-				}
-			}
-			for (auto& [key, val] : loopAvrg)
-			{
-				val /= binInstances.at(key);
-			}
-		}
-	}
-	//if (grossCv.size() == 0)
-	//{
-	//	std::cout << "Not enough valid CV data to plot" << std::endl;
-	//	return {};
-	//}
-	
-	// average across files, with stddev
-	std::map<T_Voltage, T_Stats> stats = stddev(grossCv);
-
-
-	T_ErrorPlotF output;
-	for (const auto& eDir : { E_ScanDir::Forward, E_ScanDir::Reverse})
-	{
-		for (const auto& iter : stats)
-		{
-			if (iter.first.eDir != eDir) { continue; }
-			output.x.push_back(static_cast<float>(iter.first.dVal));
-			output.y.push_back(static_cast<float>(iter.second.mean));
-			output.err.push_back(static_cast<float>(iter.second.stddev));
-		}
-	}
-	// complete the loop
-	output.x.push_back(output.x.front());
-	output.y.push_back(output.y.front());
-	output.err.push_back(output.err.front());
-	std::cout << "Done" << std::endl;
 	return output;
 }
 
