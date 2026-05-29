@@ -9,9 +9,9 @@
 #include "Options.h"
 
 // Feature wishlist
-// - CIL plotting
+// - CIL plotting (test this)
 // - batch tracking
-// - UI interfacing with Core,
+// - UI interfacing with Core
 
 int main(int argc, char* argv[])
 {

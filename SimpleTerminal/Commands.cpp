@@ -306,7 +306,7 @@ Core::E_DataTypes Commands::ParseMode(const std::string& sMode, bool bRequired)
 	{
 		eModes |= Core::kCil;
 	}
-	if (std::any_of(vModes.begin(), vModes.end(), [](const std::string& s) {return s == "cil";}))
+	if (std::any_of(vModes.begin(), vModes.end(), [](const std::string& s) {return s == "all";}))
 	{
 		eModes = Core::kAll;
 	}
