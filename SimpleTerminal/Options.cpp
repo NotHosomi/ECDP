@@ -43,8 +43,7 @@ Options::Options()
 
 	AddOpt({ "plotter-eis-ymax", "in ohms", E_OptType::Float, 1000000.0 });
 	AddOpt({ "plotter-eis-ymin", "in ohms", E_OptType::Float, 1000.0 });
-	AddOpt({ "plotter-cv-ymax", "in microamps", E_OptType::Float, 2.0 });
-	AddOpt({ "plotter-cv-ymin", "in microamps", E_OptType::Float, -2.0 });
+	AddOpt({ "plotter-cv-ylim", "in microamps", E_OptType::Float, 2.0 });
 
 }
 

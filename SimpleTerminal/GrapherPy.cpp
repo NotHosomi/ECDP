@@ -101,7 +101,7 @@ void GrapherPy::CvAverage(const std::string& sName, T_ErrorPlotF tLoop, bool bRe
 	}
 
 	CmdCv(plotDataPath, file, sName + " CV",
-		{ Options::Get().GetOpt<float>("plotter-cv-ymin"), Options::Get().GetOpt<float>("plotter-cv-ymax") },
+		{ Options::Get().GetOpt<float>("plotter-cv-ylim"), Options::Get().GetOpt<float>("plotter-cv-ylim") },
 		Options::Get().GetOpt<int>("plotter-dpi"),
 		Options::Get().GetOpt<int>("plotter-fontsize-labels"),
 		Options::Get().GetOpt<int>("plotter-fontsize-ticks"),
