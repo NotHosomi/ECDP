@@ -9,14 +9,14 @@
 class GrapherMatplotplusplus : public GrapherGeneric
 {
 public:
-	void EisAverage(const std::string& sId, const T_ErrorPlotF& tZ, const T_ErrorPlotF& tPhase) override;
-	void EisSingle(const std::string& sId, const std::string& filename, const T_EisRawData& tRaw) override;
+	void EisAverage(const std::string& sId, const T_ErrorPlotF& tZ, const T_ErrorPlotF& tPhase, bool bReplot = false) override;
+	void EisSingle(const std::string& sId, const std::string& filename, const T_EisRawData& tRaw, bool bReplot = false) override;
 
-	void CvAverage(const std::string& sId, T_ErrorPlotF tLoop) override;
-	void CvSingle(const std::string& sId, const std::string& filename, T_CvElectrodeData tLoop) override;
+	void CvAverage(const std::string& sId, T_ErrorPlotF tLoop, bool bReplot = false) override;
+	void CvSingle(const std::string& sId, const std::string& filename, T_CvElectrodeData tLoop, bool bReplot = false) override;
 
-	void CilAverage(const std::string& sId, const T_ErrorPlotF& data) override;
-	void CilMulti(const std::string& sId, const T_CilData& data) override;
+	void CilAverage(const std::string& sId, const T_ErrorPlotF& data, bool bReplot = false) override;
+	void CilMulti(const std::string& sId, const T_CilData& data, bool bReplot = false) override;
 private:
 	int m_nEisHeight = 970;
 	int m_nEisWidth = 1280;

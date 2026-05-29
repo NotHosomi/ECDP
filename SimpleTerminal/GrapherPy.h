@@ -11,14 +11,14 @@ public:
 	GrapherPy() = default;
 
 
-	void EisAverage(const std::string& sName, const T_ErrorPlotF& tZ, const T_ErrorPlotF& tPhase) override;
-	void EisSingle(const std::string& sId, const std::string& filename, const T_EisRawData& tRaw) override;
+	void EisAverage(const std::string& sName, const T_ErrorPlotF& tZ, const T_ErrorPlotF& tPhase, bool bReplot = false) override;
+	void EisSingle(const std::string& sId, const std::string& filename, const T_EisRawData& tRaw, bool bReplot = false) override;
 
-	void CvAverage(const std::string& sName, T_ErrorPlotF tLoop) override;
-	void CvSingle(const std::string& sId, const std::string& filename, T_CvElectrodeData tRaw) override;
+	void CvAverage(const std::string& sName, T_ErrorPlotF tLoop, bool bReplot = false) override;
+	void CvSingle(const std::string& sId, const std::string& filename, T_CvElectrodeData tRaw, bool bReplot = false) override;
 
-	void CilAverage(const std::string& sName, const T_ErrorPlotF& tCils) override;
-	void CilMulti(const std::string& sId, const T_CilData& data) override;
+	void CilAverage(const std::string& sName, const T_ErrorPlotF& tCils, bool bReplot = false) override;
+	void CilMulti(const std::string& sId, const T_CilData& data, bool bReplot = false) override;
 
 private:
 	std::string GetTempPath(const std::string& sName, const std::string& sMode);

@@ -8,6 +8,11 @@
 #include "Commands.h"
 #include "Options.h"
 
+// Feature wishlist
+// - CIL plotting
+// - batch tracking
+// - UI interfacing with Core,
+
 int main(int argc, char* argv[])
 {
 	//SetConsoleOutputCP(CP_UTF8);

@@ -52,9 +52,9 @@ private:
 	void PrintCscVals(const T_CvData& tCvData);
 	void PrintCilVals(std::vector<int> vPulseWidths, std::map<int, std::vector<float>> mVals, std::vector<T_Stats> vStats);
 
-	void PlotEis(T_DeviceData& tDeviceData);
-	void PlotCv(T_DeviceData& tDeviceData);
-	void PlotCil(T_DeviceData& tDeviceData);
+	void PlotEis(T_DeviceData& tDeviceData, bool bForced = false);
+	void PlotCv(T_DeviceData& tDeviceData, bool bForced = false);
+	void PlotCil(T_DeviceData& tDeviceData, bool bForced = false);
 
 	std::array<T_ErrorPlotF, 2> BuildEisPlot(const T_EisData& tData);
 	T_ErrorPlotF BuildCvPlot(const T_CvData& tData);

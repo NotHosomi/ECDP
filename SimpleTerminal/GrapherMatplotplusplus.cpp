@@ -6,9 +6,18 @@
 #include "CilData.h"
 #include "Ingester.h"
 #include "CsvFile.h"
+#include "Options.h"
 
-void GrapherMatplotplusplus::EisAverage(const std::string& sId, const T_ErrorPlotF& tZ, const T_ErrorPlotF& tPhase)
+void GrapherMatplotplusplus::EisAverage(const std::string& sId, const T_ErrorPlotF& tZ, const T_ErrorPlotF& tPhase, bool bReplot)
 {
+	std::string path = m_sOutputPath + "/" + sId + "/Plots/";
+	std::filesystem::create_directories(path);
+	std::string file = path + "EIS.png";
+	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	{
+		return;
+	}
+
 	std::cout << "Rendering EIS plot... " << std::flush;
 	using namespace matplot;
 	auto fig = figure(true);
@@ -55,20 +64,25 @@ void GrapherMatplotplusplus::EisAverage(const std::string& sId, const T_ErrorPlo
 	ylabel("Absolute Impedance (\xCE\xA9)");
 	xlabel("Frequency (Hz)");
 
-
-	std::string path = m_sOutputPath + "/" + sId + "/Plots/";
-	std::filesystem::create_directories(path);
-	save(path + "EIS.png");
+	save(file);
 	std::cout << "Done\n" << std::endl;
 }
 
-void GrapherMatplotplusplus::EisSingle(const std::string& sId, const std::string& filename, const T_EisRawData& tRaw)
+void GrapherMatplotplusplus::EisSingle(const std::string& sId, const std::string& filename, const T_EisRawData& tRaw, bool bReplot)
 {
 	std::cout << "EisSingle not implemented yet with Internal backend" << std::endl;
 }
 
-void GrapherMatplotplusplus::CvAverage(const std::string& sId, T_ErrorPlotF tLoop)
+void GrapherMatplotplusplus::CvAverage(const std::string& sId, T_ErrorPlotF tLoop, bool bReplot)
 {
+	std::string path = m_sOutputPath + "/" + sId + "/Plots/";
+	std::filesystem::create_directories(path);
+	std::string file = path + "CV.png";
+	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	{
+		return;
+	}
+
 	if (tLoop.x.size() == 0)
 	{
 		std::cout << "Cannot render CV plot" << std::endl;
@@ -97,16 +111,21 @@ void GrapherMatplotplusplus::CvAverage(const std::string& sId, T_ErrorPlotF tLoo
 	matplot::xlim({ -0.65, 0.85 });
 	matplot::ylim({ -3e-6, 3e-6 });
 
-	std::string path = m_sOutputPath + "/" + sId + "/Plots/";
-	std::filesystem::create_directories(path);
 	matplot::gcf()->width(m_nCvWidth);
 	matplot::gcf()->height(m_nCvHeight);
-	save(path + "CV.png");
+	save(file);
 	std::cout << "Done\n" << std::endl;
 }
 
-void GrapherMatplotplusplus::CvSingle(const std::string& sId, const std::string& filename, T_CvElectrodeData tElectrode)
+void GrapherMatplotplusplus::CvSingle(const std::string& sId, const std::string& filename, T_CvElectrodeData tElectrode, bool bReplot)
 {
+	std::string path = std::filesystem::current_path().string() + m_sOutputPath + "/" + sId + "/Plots/CV/";;
+	std::filesystem::create_directories(path);
+	std::string file = path + filename + " CV.png";
+	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	{
+		return;
+	}
 	std::cout << "Rendering CV plot (" << filename << ")... " << std::flush;
 
 	matplot::figure(true);
@@ -125,20 +144,18 @@ void GrapherMatplotplusplus::CvSingle(const std::string& sId, const std::string&
 	matplot::xlim({ -0.65, 0.85 });
 	matplot::ylim({ -3e-6, 3e-6 });
 
-	std::string path = m_sOutputPath + "/" + sId + "/Plots/CV/";
-	std::filesystem::create_directories(path);
 	matplot::gcf()->width(m_nCvWidth);
 	matplot::gcf()->height(m_nCvHeight);
-	matplot::save(path + filename +"CV.png");
+	matplot::save(file);
 	std::cout << "Done" << std::endl;
 }
 
-void GrapherMatplotplusplus::CilAverage(const std::string& sId, const T_ErrorPlotF& data)
+void GrapherMatplotplusplus::CilAverage(const std::string& sId, const T_ErrorPlotF& data, bool bReplot)
 {
 	std::cout << "CilAverage not implemented yet with Internal backend" << std::endl;
 }
 
-void GrapherMatplotplusplus::CilMulti(const std::string& sId, const T_CilData& data)
+void GrapherMatplotplusplus::CilMulti(const std::string& sId, const T_CilData& data, bool bReplot)
 {
 	std::cout << "CilAverage not implemented yet with Internal backend" << std::endl;
 }

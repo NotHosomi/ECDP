@@ -15,8 +15,17 @@ bool GrapherPy::Precheck()
 	// use popen to check if python is installed
 }
 
-void GrapherPy::EisAverage(const std::string& sName, const T_ErrorPlotF& tZ, const T_ErrorPlotF& tPhase)
+void GrapherPy::EisAverage(const std::string& sName, const T_ErrorPlotF& tZ, const T_ErrorPlotF& tPhase, bool bReplot)
 {
+
+	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sName + "/";
+	std::filesystem::create_directories(path);
+	std::string file = path + sName + " EIS.png";
+	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	{
+		return;
+	}
+
 	std::cout << "Rendering EIS average..." << std::flush;
 	std::string plotDataPath = GetTempPath(sName, "EIS");
 	{
@@ -29,20 +38,25 @@ void GrapherPy::EisAverage(const std::string& sName, const T_ErrorPlotF& tZ, con
 		transfer.SaveTo(plotDataPath);
 	}
 
-	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sName + "/";
-	std::filesystem::create_directories(path);
-	std::string file = path + sName + " EIS.png";
 	CmdEis(plotDataPath, file, sName + " EIS",
 		{ Options::Get().GetOpt<float>("plotter-eis-ymin"), Options::Get().GetOpt<float>("plotter-eis-ymax") },
-		{ -90.0,0.0 },
+		{ -90.0f,0.0f },
 		Options::Get().GetOpt<int>("plotter-dpi"),
 		Options::Get().GetOpt<int>("plotter-fontsize-labels"),
 		Options::Get().GetOpt<int>("plotter-fontsize-ticks"),
 		Options::Get().GetOpt<int>("plotter-fontsize-title"));
 }
 
-void GrapherPy::EisSingle(const std::string& sId, const std::string& filename, const T_EisRawData& tRaw)
+void GrapherPy::EisSingle(const std::string& sId, const std::string& filename, const T_EisRawData& tRaw, bool bReplot)
 {
+	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sId + "/EISs/";
+	std::filesystem::create_directories(path);
+	std::string file = path + filename + ".png";
+	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	{
+		return;
+	}
+
 	std::cout << "Rendering EIS for " + filename + "..." << std::flush;
 	std::string plotDataPath = GetTempPath(sId + "-" + filename, "EIS");
 	{
@@ -55,20 +69,25 @@ void GrapherPy::EisSingle(const std::string& sId, const std::string& filename, c
 		transfer.SaveTo(plotDataPath);
 	}
 
-	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sId + "/EISs/";
-	std::filesystem::create_directories(path);
-	std::string file = path + filename + ".png";
 	CmdEis(plotDataPath, file, sId + " EIS",
 		{ Options::Get().GetOpt<float>("plotter-eis-ymin"), Options::Get().GetOpt<float>("plotter-eis-ymax") },
-		{ -90.0,0.0 },
+		{ -90.0f,0.0f },
 		Options::Get().GetOpt<int>("plotter-dpi"),
 		Options::Get().GetOpt<int>("plotter-fontsize-labels"),
 		Options::Get().GetOpt<int>("plotter-fontsize-ticks"),
 		Options::Get().GetOpt<int>("plotter-fontsize-title"));
 }
 
-void GrapherPy::CvAverage(const std::string& sName, T_ErrorPlotF tLoop)
+void GrapherPy::CvAverage(const std::string& sName, T_ErrorPlotF tLoop, bool bReplot)
 {
+	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sName + "/";
+	std::filesystem::create_directories(path);
+	std::string file = path + sName + " CV.png";
+	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	{
+		return;
+	}
+
 	std::cout << "Rendering CV average..." << std::flush;
 	std::string plotDataPath = GetTempPath(sName, "CV");
 	{
@@ -81,9 +100,6 @@ void GrapherPy::CvAverage(const std::string& sName, T_ErrorPlotF tLoop)
 		transfer.SaveTo(plotDataPath);
 	}
 
-	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sName + "/";
-	std::filesystem::create_directories(path);
-	std::string file = path + sName + " CV.png";
 	CmdCv(plotDataPath, file, sName + " CV",
 		{ Options::Get().GetOpt<float>("plotter-cv-ymin"), Options::Get().GetOpt<float>("plotter-cv-ymax") },
 		Options::Get().GetOpt<int>("plotter-dpi"),
@@ -92,8 +108,16 @@ void GrapherPy::CvAverage(const std::string& sName, T_ErrorPlotF tLoop)
 		Options::Get().GetOpt<int>("plotter-fontsize-title"));
 }
 
-void GrapherPy::CvSingle(const std::string& sId, const std::string& filename, T_CvElectrodeData tRaw)
+void GrapherPy::CvSingle(const std::string& sId, const std::string& filename, T_CvElectrodeData tRaw, bool bReplot)
 {
+	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sId + "/CVs/";
+	std::filesystem::create_directories(path);
+	std::string file = path + filename + ".png";
+	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	{
+		return;
+	}
+
 	std::cout << "Rendering CV for " + filename + "..." << std::flush;
 	std::string plotDataPath = GetTempPath(sId + "-" + filename, "CV");
 	{
@@ -115,10 +139,7 @@ void GrapherPy::CvSingle(const std::string& sId, const std::string& filename, T_
 		transfer.SaveTo(plotDataPath);
 	}
 
-	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sId + "/CVs/";
-	std::filesystem::create_directories(path);
-	std::string output = path + filename + ".png";
-	CmdCv(plotDataPath, output, sId + " " + filename + " CV",
+	CmdCv(plotDataPath, file, sId + " " + filename + " CV",
 		{ Options::Get().GetOpt<float>("plotter-cv-ymin"), Options::Get().GetOpt<float>("plotter-cv-ymax") },
 		Options::Get().GetOpt<int>("plotter-dpi"),
 		Options::Get().GetOpt<int>("plotter-fontsize-labels"),
@@ -126,8 +147,16 @@ void GrapherPy::CvSingle(const std::string& sId, const std::string& filename, T_
 		Options::Get().GetOpt<int>("plotter-fontsize-title"));
 }
 
-void GrapherPy::CilAverage(const std::string& sName, const T_ErrorPlotF& tCil)
+void GrapherPy::CilAverage(const std::string& sName, const T_ErrorPlotF& tCil, bool bReplot)
 {
+	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sName + "/";
+	std::filesystem::create_directories(path);
+	std::string file = path + sName + " CIL.png";
+	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	{
+		return;
+	}
+
 	std::cout << "Rendering CIL average..." << std::flush;
 	std::string plotDataPath = GetTempPath(sName, "CIL");
 	{
@@ -140,9 +169,6 @@ void GrapherPy::CilAverage(const std::string& sName, const T_ErrorPlotF& tCil)
 		transfer.SaveTo(plotDataPath);
 	}
 
-	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sName + "/";
-	std::filesystem::create_directories(path);
-	std::string file = path + sName + " CIL.png";
 	CmdCil(plotDataPath, file, sName + " CIL",
 		Options::Get().GetOpt<int>("plotter-dpi"),
 		Options::Get().GetOpt<int>("plotter-fontsize-labels"),
@@ -150,8 +176,16 @@ void GrapherPy::CilAverage(const std::string& sName, const T_ErrorPlotF& tCil)
 		Options::Get().GetOpt<int>("plotter-fontsize-title"));
 }
 
-void GrapherPy::CilMulti(const std::string& sName, const T_CilData& data)
+void GrapherPy::CilMulti(const std::string& sName, const T_CilData& data, bool bReplot)
 {
+	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sName + "/";
+	std::filesystem::create_directories(path);
+	std::string file = path + sName + " multi CIL.png";
+	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	{
+		return;
+	}
+
 	std::cout << "Rendering CIL multiline..." << std::flush;
 	std::string plotDataPath = GetTempPath(sName + "-multi", "CIL");
 	{
@@ -173,9 +207,7 @@ void GrapherPy::CilMulti(const std::string& sName, const T_CilData& data)
 		}
 		transfer.SaveTo(plotDataPath);
 	}
-	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sName + "/";
-	std::filesystem::create_directories(path);
-	std::string file = path + sName + " multi CIL.png";
+
 	CmdCil(plotDataPath, file, sName + " CILs",
 		Options::Get().GetOpt<int>("plotter-dpi"),
 		Options::Get().GetOpt<int>("plotter-fontsize-labels"),

@@ -176,6 +176,7 @@ T_EisData Core::Eis(T_DeviceData& tDeviceData, const Ingester& ingest, const T_E
 	}
 	// EIS Table
 	PrintEisVals(tDeviceData.tEis.value(), tConfig);
+	PlotEis(tDeviceData, false);
 
 	return tDeviceData.tEis.value();
 }
@@ -205,7 +206,7 @@ T_CvData Core::Cv(T_DeviceData& tDeviceData, const Ingester& ingest, const T_CvC
 	//std::vector<std::string> cvExcludes;
 	PrintCscVals(tDeviceData.tCv.value());
 
-	PlotCv(tDeviceData);
+	PlotCv(tDeviceData, false);
 	return tDeviceData.tCv.value();
 }
 
@@ -244,15 +245,7 @@ T_CilData Core::Cil(T_DeviceData& tDeviceData, const Ingester& ingest, const T_C
 	std::cout << "\nNormalised CIL values" << std::endl;
 	PrintCilVals(tCilData.vPulseWidths, tCilData.mCilValsNormalised, tCilData.vCilStatsNormalised);
 
-	if (tConfig.plotCil)
-	{
-		// Plot CIL values
-		//m_pGrapher->CilAverage(tDeviceData.sDeviceId, tCilData);
-	}
-	if (tConfig.plotEachElectrode)
-	{
-		m_pGrapher->CilMulti(tDeviceData.sDeviceId, tCilData);
-	}
+	PlotCil(tDeviceData, false);
 	return tCilData;
 }
 
@@ -334,18 +327,18 @@ void Core::PrintCilVals(std::vector<int> vPulseWidths, std::map<int, std::vector
 	cilTable.Print(TERM_YELLOW);
 }
 
-void Core::PlotEis(T_DeviceData& tDeviceData)
+void Core::PlotEis(T_DeviceData& tDeviceData, bool bForced)
 {
 	if (!tDeviceData.tEis.has_value())
 	{
-		std::cout << "No EIS data" << std::endl;
+		std::cout << "Cannot plot - No EIS data" << std::endl;
 		return;
 	}
 	// EIS Plot
 	if (Options::Get().GetOpt<bool>("eis-plot-avrg"))
 	{
 		std::array<T_ErrorPlotF, 2> EisData = BuildEisPlot(tDeviceData.tEis.value());
-		m_pGrapher->EisAverage(tDeviceData.sDeviceId, EisData[0], EisData[1]);
+		m_pGrapher->EisAverage(tDeviceData.sDeviceId, EisData[0], EisData[1], bForced);
 	}
 	else
 	{
@@ -355,7 +348,7 @@ void Core::PlotEis(T_DeviceData& tDeviceData)
 	{
 		for (const auto [key, data] : tDeviceData.tEis.value().mRaw)
 		{
-			m_pGrapher->EisSingle(tDeviceData.sDeviceId, key, data);
+			m_pGrapher->EisSingle(tDeviceData.sDeviceId, key, data, bForced);
 		}
 	}
 	else
@@ -364,11 +357,11 @@ void Core::PlotEis(T_DeviceData& tDeviceData)
 	}
 }
 
-void Core::PlotCv(T_DeviceData& tDeviceData)
+void Core::PlotCv(T_DeviceData& tDeviceData, bool bForced)
 {
 	if (!tDeviceData.tCv.has_value())
 	{
-		std::cout << "No CV data" << std::endl;
+		std::cout << "Cannot plot - No CV data" << std::endl;
 		return;
 	}
 
@@ -376,20 +369,36 @@ void Core::PlotCv(T_DeviceData& tDeviceData)
 	if (Options::Get().GetOpt<bool>("cv-plot-avrg"))
 	{
 		T_ErrorPlotF tCvPlot = BuildCvPlot(tDeviceData.tCv.value());
-		m_pGrapher->CvAverage(tDeviceData.sDeviceId, tCvPlot);
+		m_pGrapher->CvAverage(tDeviceData.sDeviceId, tCvPlot, bForced);
 	}
 	// Plot each CV
 	if (Options::Get().GetOpt<bool>("cv-plot-each"))
 	{
 		for (const auto& [key, data] : tDeviceData.tCv.value().mElectrodes)
 		{
-			m_pGrapher->CvSingle(tDeviceData.sDeviceId, key, data);
+			m_pGrapher->CvSingle(tDeviceData.sDeviceId, key, data, bForced);
 		}
 	}
 }
 
-void Core::PlotCil(T_DeviceData& tDeviceData)
+void Core::PlotCil(T_DeviceData& tDeviceData, bool bForced)
 {
+	if (!tDeviceData.tCil.has_value())
+	{
+		std::cout << "Cannot plot - No CIL data" << std::endl;
+		return;
+	}
+	if (Options::Get().GetOpt<bool>("cil-plot-avrg"))
+	{
+		// Plot CIL values
+		//m_pGrapher->CilAverage(tDeviceData.sDeviceId, tCilData);
+		T_ErrorPlotF tCilPlot = BuildCilPlot(tDeviceData.tCil.value());
+		m_pGrapher->CilAverage(tDeviceData.sDeviceId, tCilPlot, bForced);
+	}
+	if (Options::Get().GetOpt<bool>("cil-plot-each"))
+	{
+		m_pGrapher->CilMulti(tDeviceData.sDeviceId, tDeviceData.tCil.value(), bForced);
+	}
 }
 
 std::array<T_ErrorPlotF, 2> Core::BuildEisPlot(const T_EisData& tData)
