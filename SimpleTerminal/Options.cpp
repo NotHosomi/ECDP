@@ -15,7 +15,7 @@ Options::Options()
 
 	AddOpt({ "eis-impedence-limit", "The threshold at which electrodes are flagged as non-functional", E_OptType::Float, 25000.0 });
 
-	AddOpt({ "eis-keyvals", "The frequencies rendered in the EIS table", E_OptType::String, "100,1000,1995.3" });
+	AddOpt({ "eis-keyvals", "The frequencies rendered in the EIS table, represented by a comma seperated list", E_OptType::String, "100,1000,1995.3" });
 	AddOpt({ "eis-threshold-upper-red", "Impedence values above this threshold will be excluded as a non-functional electrode", E_OptType::Int, 100000});
 	AddOpt({ "eis-threshold-upper-yellow", "Impedence values above this threshold might be non-functional", E_OptType::Int, 20000});
 	AddOpt({ "eis-threshold-lower-red", "Impedence values below this threshold will be excluded as being shorted", E_OptType::Int, 100000 });
