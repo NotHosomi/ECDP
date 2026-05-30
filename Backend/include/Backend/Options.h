@@ -34,7 +34,7 @@ public:
 	DLL const T_Opt& GetOpt(const std::string& sName);
 
 	template<typename T>
-	DLL const T& GetOpt(const std::string& sName);
+	T GetOpt(const std::string& sName);
 
 	DLL bool SetOpt(const std::string& sOptName, int val);
 	DLL bool SetOpt(const std::string& sOptName, double val);
@@ -68,9 +68,9 @@ bool Options::SetOpt(const std::string& sOptName, T val, E_OptType eType)
 }
 
 template<typename T>
-const T& Options::GetOpt(const std::string& sName)
+T Options::GetOpt(const std::string& sName)
 {
-	const T_Opt opt = m_mOptions.at(sName);
+	const T_Opt& opt = m_mOptions.at(sName);
 	if constexpr (std::is_same<T, int>::value)
 	{
 		return std::get<int>(opt.val);

@@ -2,12 +2,13 @@
 //
 
 #include <iostream>
-#include "TerminalColours.h"
-#include "StrUtils.h"
-#include "Core.h"
-#include 
+
+#include <Backend/TerminalColours.h>
+#include <Backend/Core.h>
+#include <Backend/StrUtils.h>
+#include <Backend/Options.h>
+
 #include "Commands.h"
-#include "Options.h"
 
 // Feature wishlist
 // - batch tracking

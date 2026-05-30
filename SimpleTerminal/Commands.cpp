@@ -1,9 +1,9 @@
 #include "Commands.h"
 #include <iostream>
 #include <fstream>
-#include "Ingester.h"
-#include "StrUtils.h"
-#include "Options.h"
+#include <Backend/Ingester.h>
+#include <Backend/StrUtils.h>
+#include <Backend/Options.h>
 
 
 Commands::Commands(Core* pCore) :

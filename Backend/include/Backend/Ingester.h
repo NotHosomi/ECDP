@@ -3,6 +3,7 @@
 #include <array>
 #include <map>
 #include <utility>
+#include "dllspec.h"
 #include "Plottables.h"
 #include "CsvFile.h"
 #include "EisData.h"
@@ -14,23 +15,23 @@
 class Ingester
 {
 public:
-	Ingester(std::filesystem::path deviceDirectory);
+	DLL Ingester(std::filesystem::path deviceDirectory);
 
-	T_EisData ParseEis(const std::vector<std::string>& vKeyVals) const;
-	T_CvData CalculateCscVals() const;
-	T_CilData CalculateCilVals() const;
+	DLL T_EisData ParseEis(const std::vector<std::string>& vKeyVals) const;
+	DLL T_CvData CalculateCscVals() const;
+	DLL T_CilData CalculateCilVals() const;
 
-	std::array<T_ErrorPlotF, 2> GetEisPlot() const;
-	T_ErrorPlotF GetCvPlot(const std::vector<std::string>& vExcludes = {}) const;
+	DLL std::array<T_ErrorPlotF, 2> GetEisPlot() const;
+	DLL T_ErrorPlotF GetCvPlot(const std::vector<std::string>& vExcludes = {}) const;
 
-	const std::vector<std::filesystem::path> GetEisFiles() const;
-	const std::vector<std::filesystem::path> GetCvFiles() const;
-	const std::vector<std::filesystem::path> GetCilPaths() const;
+	DLL const std::vector<std::filesystem::path> GetEisFiles() const;
+	DLL const std::vector<std::filesystem::path> GetCvFiles() const;
+	DLL const std::vector<std::filesystem::path> GetCilPaths() const;
 
-	float GetElectrodeDiameter() const;
-	double GetElectrodeArea_cm2() const;
-	double GetElectrodeArea_um2() const;
-	const T_DeviceInfo& GetDeviceInfo() const;
+	DLL float GetElectrodeDiameter() const;
+	DLL double GetElectrodeArea_cm2() const;
+	DLL double GetElectrodeArea_um2() const;
+	DLL const T_DeviceInfo& GetDeviceInfo() const;
 
 private:
 	std::vector<CsvFile> readFiles(const std::vector<std::filesystem::path>& fileaddrs) const;

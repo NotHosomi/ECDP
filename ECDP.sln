@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.14.36414.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GUI", "DataCenter\DataCenter.vcxproj", "{97042905-70D3-43E7-9CC2-5A9B19D81A6C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{49CD024B-BB7D-499A-8CC8-7CEA8D31EEAD} = {49CD024B-BB7D-499A-8CC8-7CEA8D31EEAD}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleTerminal", "SimpleTerminal\SimpleTerminal.vcxproj", "{6804EE7F-2F32-4AF6-9EE8-26EA599C540A}"
 	ProjectSection(ProjectDependencies) = postProject

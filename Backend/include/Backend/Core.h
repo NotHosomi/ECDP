@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include "dllspec.h"
 #include "GrapherGeneric.h"
 #include "stddev.h"
 #include "Archive.h"
@@ -28,7 +29,7 @@ enum E_CmdErr
 class Core
 {
 public:
-	Core();
+	DLL Core();
 
 	enum E_DataTypes
 	{
@@ -38,9 +39,9 @@ public:
 		kCil = 1 << 2,
 		kAll = kEis | kCv | kCil
 	};
-	E_CmdErr Run(const std::string sDeviceId, E_DataTypes eModes);
-	E_CmdErr Plot(const std::string sDeviceId, E_DataTypes eModes);
-	bool BatchAverages(const std::vector<std::string> sIds);
+	DLL E_CmdErr Run(const std::string sDeviceId, E_DataTypes eModes);
+	DLL E_CmdErr Plot(const std::string sDeviceId, E_DataTypes eModes);
+	DLL bool BatchAverages(const std::vector<std::string> sIds);
 
 
 private:
