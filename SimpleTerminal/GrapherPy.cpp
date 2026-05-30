@@ -21,7 +21,7 @@ void GrapherPy::EisAverage(const std::string& sName, const T_ErrorPlotF& tZ, con
 	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sName + "/";
 	std::filesystem::create_directories(path);
 	std::string file = path + sName + " EIS.png";
-	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	if (std::filesystem::exists(file) && !Options::Get().GetOpt<bool>("plotter-force-replot") && !bReplot)
 	{
 		return;
 	}
@@ -52,7 +52,7 @@ void GrapherPy::EisSingle(const std::string& sId, const std::string& filename, c
 	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sId + "/EISs/";
 	std::filesystem::create_directories(path);
 	std::string file = path + filename + ".png";
-	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	if (std::filesystem::exists(file) && !Options::Get().GetOpt<bool>("plotter-force-replot") && !bReplot)
 	{
 		return;
 	}
@@ -83,7 +83,7 @@ void GrapherPy::CvAverage(const std::string& sName, T_ErrorPlotF tLoop, bool bRe
 	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sName + "/";
 	std::filesystem::create_directories(path);
 	std::string file = path + sName + " CV.png";
-	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	if (std::filesystem::exists(file) && !Options::Get().GetOpt<bool>("plotter-force-replot") && !bReplot)
 	{
 		return;
 	}
@@ -113,7 +113,7 @@ void GrapherPy::CvSingle(const std::string& sId, const std::string& filename, T_
 	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sId + "/CVs/";
 	std::filesystem::create_directories(path);
 	std::string file = path + filename + ".png";
-	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	if (std::filesystem::exists(file) && !Options::Get().GetOpt<bool>("plotter-force-replot") && !bReplot)
 	{
 		return;
 	}
@@ -152,7 +152,7 @@ void GrapherPy::CilAverage(const std::string& sName, const T_ErrorPlotF& tCil, b
 	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sName + "/";
 	std::filesystem::create_directories(path);
 	std::string file = path + sName + " CIL.png";
-	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	if (std::filesystem::exists(file) && !Options::Get().GetOpt<bool>("plotter-force-replot") && !bReplot)
 	{
 		return;
 	}
@@ -181,7 +181,7 @@ void GrapherPy::CilMulti(const std::string& sName, const T_CilData& data, bool b
 	std::string path = std::filesystem::current_path().string() + m_sOutputPath + sName + "/";
 	std::filesystem::create_directories(path);
 	std::string file = path + sName + " multi CIL.png";
-	if (std::filesystem::exists(file) || Options::Get().GetOpt<bool>("plotter-force-replot") || bReplot)
+	if (std::filesystem::exists(file) && !Options::Get().GetOpt<bool>("plotter-force-replot") && !bReplot)
 	{
 		return;
 	}

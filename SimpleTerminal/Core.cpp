@@ -102,6 +102,11 @@ E_CmdErr Core::Run(const std::string sDeviceId, E_DataTypes eModes)
 
 E_CmdErr Core::Plot(const std::string sDeviceId, E_DataTypes eModes)
 {
+	if (!LoadGrapher())
+	{
+		return E_CmdErr::BadOptions;
+	}
+
 	T_DeviceData data = m_Archive.GetDevice(sDeviceId);
 	if (data.sDeviceId == "")
 	{
@@ -115,7 +120,7 @@ E_CmdErr Core::Plot(const std::string sDeviceId, E_DataTypes eModes)
 		}
 		else
 		{
-			PlotEis(data);
+			PlotEis(data, true);
 		}
 	}
 	if (eModes & E_DataTypes::kCv)
@@ -126,7 +131,7 @@ E_CmdErr Core::Plot(const std::string sDeviceId, E_DataTypes eModes)
 		}
 		else
 		{
-			PlotCv(data);
+			PlotCv(data, true);
 		}
 	}
 	if (eModes & E_DataTypes::kCil)
@@ -137,7 +142,7 @@ E_CmdErr Core::Plot(const std::string sDeviceId, E_DataTypes eModes)
 		}
 		else
 		{
-			PlotCil(data);
+			PlotCil(data, true);
 		}
 	}
 	return E_CmdErr::None;
