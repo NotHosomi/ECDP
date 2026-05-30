@@ -5,6 +5,7 @@
 #include "EisData.h"
 #include "CilData.h"
 #include "CvData.h"
+#include "dllspec.h"
 
 struct T_DeviceData
 {
@@ -19,15 +20,15 @@ struct T_DeviceData
 class Archive
 {
 public:
-	Archive();
+	DLL Archive();
 	
-	void AddDevice(const T_DeviceData& tDevice);
+	DLL void AddDevice(const T_DeviceData& tDevice);
 
-	void SaveAll();
-	void LoadAll();
-	void Clear();
+	DLL void SaveAll();
+	DLL void LoadAll();
+	DLL void Clear();
 
-	const T_DeviceData& GetDevice(const std::string& sDeviceId);
+	DLL const T_DeviceData& GetDevice(const std::string& sDeviceId);
 
 private:
 	std::filesystem::path m_Path = "./Archive";

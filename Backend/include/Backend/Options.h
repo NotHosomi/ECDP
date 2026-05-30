@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <cassert>
 #include <nlohmann\json.hpp>
+#include "dllspec.h"
 
 enum class E_OptType
 {
@@ -28,21 +29,21 @@ class Options
 private:
 	Options();
 public:
-	static Options& Get();
+	DLL static Options& Get();
 
-	const T_Opt& GetOpt(const std::string& sName);
+	DLL const T_Opt& GetOpt(const std::string& sName);
 
 	template<typename T>
-	T GetOpt(const std::string& sName);
+	DLL const T& GetOpt(const std::string& sName);
 
-	bool SetOpt(const std::string& sOptName, int val);
-	bool SetOpt(const std::string& sOptName, double val);
-	bool SetOpt(const std::string& sOptName, const std::string& val);
+	DLL bool SetOpt(const std::string& sOptName, int val);
+	DLL bool SetOpt(const std::string& sOptName, double val);
+	DLL bool SetOpt(const std::string& sOptName, const std::string& val);
 
-	bool SaveOpts(const std::string& filename = "default");
-	bool LoadOpts(const std::string& filename = "default");
+	DLL bool SaveOpts(const std::string& filename = "default");
+	DLL bool LoadOpts(const std::string& filename = "default");
 
-	const std::map<std::string, T_Opt>& Data();
+	DLL const std::map<std::string, T_Opt>& Data();
 
 private:
 	void AddOpt(const T_Opt& tOpt);
@@ -67,7 +68,7 @@ bool Options::SetOpt(const std::string& sOptName, T val, E_OptType eType)
 }
 
 template<typename T>
-T Options::GetOpt(const std::string& sName)
+const T& Options::GetOpt(const std::string& sName)
 {
 	const T_Opt opt = m_mOptions.at(sName);
 	if constexpr (std::is_same<T, int>::value)

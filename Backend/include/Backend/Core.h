@@ -7,6 +7,8 @@
 #include "CvData.h"
 #include "CilData.h"
 
+// core will need overhauling?
+
 class Ingester;
 struct T_CvData;
 
