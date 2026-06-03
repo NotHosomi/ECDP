@@ -54,6 +54,9 @@
     <ClCompile Include="StrUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TermGeneric.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Backend\Archive.h">
@@ -125,7 +128,10 @@
     <ClInclude Include="include\Backend\Symbols.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Backend\TerminalColours.h">
+    <ClInclude Include="include\Backend\TermGeneric.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SimpleTerminal\TerminalColours.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

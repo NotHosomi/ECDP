@@ -164,8 +164,10 @@
     <ClCompile Include="PrintTable.cpp" />
     <ClCompile Include="stddev.cpp" />
     <ClCompile Include="StrUtils.cpp" />
+    <ClCompile Include="TermGeneric.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\SimpleTerminal\TerminalColours.h" />
     <ClInclude Include="include\Backend\Archive.h" />
     <ClInclude Include="include\Backend\BatchData.h" />
     <ClInclude Include="include\Backend\CilData.h" />
@@ -189,7 +191,7 @@
     <ClInclude Include="include\Backend\stddev.h" />
     <ClInclude Include="include\Backend\StrUtils.h" />
     <ClInclude Include="include\Backend\Symbols.h" />
-    <ClInclude Include="include\Backend\TerminalColours.h" />
+    <ClInclude Include="include\Backend\TermGeneric.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

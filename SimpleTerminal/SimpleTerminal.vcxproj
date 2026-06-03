@@ -133,9 +133,12 @@
   <ItemGroup>
     <ClCompile Include="Commands.cpp" />
     <ClCompile Include="SimpleTerminal.cpp" />
+    <ClCompile Include="TermCout.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Commands.h" />
+    <ClInclude Include="TermCout.h" />
+    <ClInclude Include="TerminalColours.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Backend\Backend.vcxproj">

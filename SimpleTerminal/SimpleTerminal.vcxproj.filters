@@ -21,9 +21,18 @@
     <ClCompile Include="Commands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TermCout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Commands.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TermCout.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TerminalColours.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

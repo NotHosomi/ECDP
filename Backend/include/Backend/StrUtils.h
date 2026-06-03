@@ -16,6 +16,5 @@ namespace SU
 	DLL std::vector<std::string> Delimit(const std::string& s, const std::string& delimiter = "\r\n");
 	DLL std::pair<std::string, std::string> DelimitOnce(const std::string& s, const std::string& delimiter);
 	DLL std::vector<std::string> DelimitWithQuotes(const std::string& s, const std::string& delimiter);
-
 };
 
