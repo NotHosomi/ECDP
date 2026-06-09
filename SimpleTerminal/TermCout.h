@@ -1,8 +1,8 @@
 #pragma once
-#include <Backend/TermGeneric.h>
+#include <Backend/Term.h>
 #include <string>
 
-class TermCout : public TermGeneric
+class TermCout : public Term
 {
 public:
 	void Print(const std::string& sText, E_Colour sColour = E_Colour::None) override;

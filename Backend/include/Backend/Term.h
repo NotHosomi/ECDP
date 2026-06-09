@@ -1,13 +1,13 @@
 #pragma once
 #include <string>
 
-class TermGeneric
+class Term
 {
 private:
-	static TermGeneric* ms_pInstance;
+	static Term* ms_pInstance;
 public:
-	static TermGeneric* Get();
-	static void Set(TermGeneric* pNewInstance);
+	static Term* Get();
+	static void Set(Term* pNewInstance);
 
 	enum class E_Colour
 	{

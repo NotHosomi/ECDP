@@ -1,5 +1,5 @@
 #include "Core.h"
-#include <iostream>
+#include "Term.h"
 #include <algorithm>
 #include "Ingester.h"
 #include "TerminalColours.h"
@@ -22,7 +22,7 @@ Core::Core()
 		{
 			if (dataPath != "")
 			{
-				std::cout << TERM_BOLDRED << "Data path \"" + dataPath + "\" does not exist" << TERM_RESET << std::endl;
+				Term::Get()->Println("Data path \"" + dataPath + "\" does not exist", Term::E_Colour::RedBold);
 			}
 			std::cout << "Please specify data directory: ";
 			std::cin >> dataPath;
