@@ -24,15 +24,15 @@ Core::Core()
 			{
 				Term::Get()->Println("Data path \"" + dataPath + "\" does not exist", Term::E_Colour::RedBold);
 			}
-			std::cout << "Please specify data directory: ";
-			std::cin >> dataPath;
+			Term::Get()->Print("Please specify data directory: ");
+			std::cin >> dataPath; // todo: add reading user input to the Term class?
 			std::cin.clear();
 		} while (!std::filesystem::exists(dataPath));
 		Options::Get().SetOpt("ingest-dir", dataPath);
 	}
 	else
 	{
-		std::cout << "Data directory: " << std::filesystem::path(dataPath) << std::endl;
+		Term::Get()->Println("Data directory: " + std::filesystem::path(dataPath).string());
 	}
 }
 
@@ -46,18 +46,17 @@ E_CmdErr Core::Run(const std::string sDeviceId, E_DataTypes eModes)
 	std::filesystem::path devicePath = Options::Get().GetOpt<std::string>("ingest-dir") + "/" + sDeviceId;
 	if (!std::filesystem::exists(devicePath))
 	{
-		std::cout << "Could not find " << sDeviceId << std::endl;
+		Term::Get()->Println("Could not find " + sDeviceId);
 		return E_CmdErr::BadArgs;
 	}
 
-
-	std::cout << "\nReading device " << sDeviceId << "\n-------------------" << std::endl;
+	Term::Get()->Println("\nReading device " + sDeviceId + "\n-------------------");
 	Ingester ingest(devicePath);
 	T_DeviceData data = m_Archive.GetDevice(sDeviceId);
 	bool isInArchive = data.sDeviceId != "";
 	if (isInArchive)
 	{
-		std::cout << "Device " << sDeviceId << " found in archive" << std::endl;
+		Term::Get()->Println("Device " + sDeviceId + " found in archive");
 	}
 	else
 	{
@@ -84,7 +83,7 @@ E_CmdErr Core::Run(const std::string sDeviceId, E_DataTypes eModes)
 	}
 	m_Archive.SaveAll();
 
-	std::cout << "\nFinished " << sDeviceId << "\n" << std::endl;
+	Term::Get()->Println("\nFinished " + sDeviceId + "\n");
 	return E_CmdErr::None;
 }
 
@@ -98,13 +97,13 @@ E_CmdErr Core::Plot(const std::string sDeviceId, E_DataTypes eModes)
 	T_DeviceData data = m_Archive.GetDevice(sDeviceId);
 	if (data.sDeviceId == "")
 	{
-		std::cout << "Device must be ingested before plotting" << std::endl;
+		Term::Get()->Println("Device must be ingested before plotting");
 	}
 	if (eModes & E_DataTypes::kEis)
 	{
 		if (!data.tEis.has_value())
 		{
-			std::cout << "Device hasn't ingested EIS" << std::endl;
+			Term::Get()->Println("Device hasn't ingested EIS");
 		}
 		else
 		{
@@ -115,7 +114,7 @@ E_CmdErr Core::Plot(const std::string sDeviceId, E_DataTypes eModes)
 	{
 		if (!data.tCv.has_value())
 		{
-			std::cout << "Device hasn't ingested CIL" << std::endl;
+			Term::Get()->Println("Device hasn't ingested CV");
 		}
 		else
 		{
@@ -126,7 +125,7 @@ E_CmdErr Core::Plot(const std::string sDeviceId, E_DataTypes eModes)
 	{
 		if (!data.tCil.has_value())
 		{
-			std::cout << "Device hasn't ingested CIL" << std::endl;
+			Term::Get()->Println("Device hasn't ingested CIL");
 		}
 		else
 		{
@@ -147,7 +146,7 @@ T_EisData Core::Eis(T_DeviceData& tDeviceData, const Ingester& ingest)
 		}
 		catch (...)
 		{
-			std::cout << "Could not parse opt eis-keyvals. Aborting" << std::endl;
+			Term::Get()->Println("Could not parse opt eis-keyvals. Aborting");
 			return {};
 		}
 	}
@@ -184,7 +183,7 @@ T_CvData Core::Cv(T_DeviceData& tDeviceData, const Ingester& ingest)
 		T_CvData newdata = ingest.CalculateCscVals();
 		if (newdata.mElectrodes.size() == 0)
 		{
-			std::cout << "No CV data found" << std::endl;
+			Term::Get()->Println("No CV data found");
 		}
 		else
 		{
@@ -211,7 +210,7 @@ T_CilData Core::Cil(T_DeviceData& tDeviceData, const Ingester& ingest)
 		
 		if (newdata.mCilVals.size() == 0)
 		{
-			std::cout << "No CIL data found" << std::endl;
+			Term::Get()->Println("No CV data found");
 		}
 		else
 		{
@@ -228,9 +227,9 @@ T_CilData Core::Cil(T_DeviceData& tDeviceData, const Ingester& ingest)
 	{
 		return {};
 	}
-	std::cout << "\nCIL values" << std::endl;
+	Term::Get()->Println("\nCIL values");
 	PrintCilVals(tCilData.vPulseWidths, tCilData.mCilVals, tCilData.vCilStats);
-	std::cout << "\nNormalised CIL values" << std::endl;
+	Term::Get()->Println("\nCIL values (Normalised)");
 	PrintCilVals(tCilData.vPulseWidths, tCilData.mCilValsNormalised, tCilData.vCilStatsNormalised);
 
 	PlotCil(tDeviceData, false);
@@ -339,7 +338,7 @@ void Core::PlotEis(T_DeviceData& tDeviceData, bool bForced)
 {
 	if (!tDeviceData.tEis.has_value())
 	{
-		std::cout << "Cannot plot - No EIS data" << std::endl;
+		Term::Get()->Println("Cannot plot - No EIS data");
 		return;
 	}
 	// EIS Plot
@@ -350,7 +349,8 @@ void Core::PlotEis(T_DeviceData& tDeviceData, bool bForced)
 	}
 	else
 	{
-		std::cout << "Skipping average EIS plot (eis-plot-avrg=0)" << std::endl;
+		Term::Get()->Println("Skipping average EIS plot (eis-plot-avrg=0)");
+
 	}
 	if (Options::Get().GetOpt<bool>("eis-plot-each"))
 	{
@@ -361,7 +361,7 @@ void Core::PlotEis(T_DeviceData& tDeviceData, bool bForced)
 	}
 	else
 	{
-		std::cout << "Skipping per-electrode EIS plots (eis-plot-each=0)" << std::endl;
+		Term::Get()->Println("Skipping per-electrode EIS plots (eis-plot-each=0)");
 	}
 }
 
@@ -369,7 +369,7 @@ void Core::PlotCv(T_DeviceData& tDeviceData, bool bForced)
 {
 	if (!tDeviceData.tCv.has_value())
 	{
-		std::cout << "Cannot plot - No CV data" << std::endl;
+		Term::Get()->Println("Cannot plot - No CV data");
 		return;
 	}
 
@@ -393,7 +393,7 @@ void Core::PlotCil(T_DeviceData& tDeviceData, bool bForced)
 {
 	if (!tDeviceData.tCil.has_value())
 	{
-		std::cout << "Cannot plot - No CIL data" << std::endl;
+		Term::Get()->Println("Cannot plot - No CIL data");
 		return;
 	}
 	if (Options::Get().GetOpt<bool>("cil-plot-avrg"))
@@ -411,7 +411,7 @@ void Core::PlotCil(T_DeviceData& tDeviceData, bool bForced)
 
 std::array<T_ErrorPlotF, 2> Core::BuildEisPlot(const T_EisData& tData)
 {
-	std::cout << "Building EIS plot..." << std::flush;
+	Term::Get()->Print("Building EIS plot...");
 	std::vector<std::string> excludeElectrodes;
 	for (const auto& [electrode, data] : tData.mRaw)
 	{
@@ -460,7 +460,7 @@ std::array<T_ErrorPlotF, 2> Core::BuildEisPlot(const T_EisData& tData)
 		PointsPhase.y.push_back(static_cast<float>(rowPhaseStats.mean));
 		PointsPhase.err.push_back(static_cast<float>(rowPhaseStats.stddev));
 	}
-	std::cout << " Done" << std::endl;
+	Term::Get()->Println("Done");
 	return { PointsZ, PointsPhase };
 }
 
@@ -491,7 +491,7 @@ struct T_Voltage
 };
 T_ErrorPlotF Core::BuildCvPlot(const T_CvData& tData)
 {
-	std::cout << "Building CV plot... " << std::flush;
+	Term::Get()->Print("Building CV plot...");
 	std::vector<std::map<T_Voltage, double>> grossCv;
 	for (const auto& [electrode, data] : tData.mElectrodes)
 	{
@@ -564,7 +564,7 @@ T_ErrorPlotF Core::BuildCvPlot(const T_CvData& tData)
 	output.x.push_back(output.x.front());
 	output.y.push_back(output.y.front());
 	output.err.push_back(output.err.front());
-	std::cout << "Done" << std::endl;
+	Term::Get()->Println("Done");
 	return output;
 }
 
@@ -601,12 +601,13 @@ bool Core::LoadGrapher()
 	}
 	if (backend == "qt")
 	{
-		std::cout << "Warning: Qt plotting backend not yet integrated" << std::endl;
+		Term::Get()->Println("Warning: Qt plotting backend not yet integrated");
 		return false;
 	}
 	else
 	{
-		std::cout << "Warning: Unknown plotting backend specified" << std::endl;
+
+		Term::Get()->Println("Warning: Unknown plotting backend specified");
 		return false;
 	}
 
@@ -620,21 +621,25 @@ bool Core::BatchAverages(const std::vector<std::string> sIds)
 	{
 		if (m_Archive.GetDevice(sId).sDeviceId == "")
 		{
-			std::cout << "\nDevice " << sId << " not in archive" << std::flush;
+			Term::Get()->Println("Device " + sId + " not in archive");
 			if (Run(sId, static_cast<E_DataTypes>(E_DataTypes::kEis | E_DataTypes::kCv | E_DataTypes::kCil)) == E_CmdErr::None)
 			{
 				devices.push_back(m_Archive.GetDevice(sId));
 			}
+			else
+			{
+				Term::Get()->Println("Failed to ingest device " + sId);
+			}
 		}
 		else
 		{
-			std::cout << "\nFound device " << sId << " in archive" << std::endl;
+			Term::Get()->Println("Found device " + sId + " in archive");
 			devices.push_back(m_Archive.GetDevice(sId));
 		}
 	}
 	if (devices.size() < 2)
 	{
-		std::cout << "Need more than 2 devices to run a batch stat pool" << std::endl;
+		Term::Get()->Println("Need more than 2 devices to run a batch stat pool");
 		return false;
 	}
 
@@ -644,7 +649,8 @@ bool Core::BatchAverages(const std::vector<std::string> sIds)
 	{
 		if (!device.tEis.has_value())
 		{
-			std::cout << device.sDeviceId << " is missing EIS data" << std::endl;
+			Term::Get()->Println(device.sDeviceId + " is missing EIS data", Term::E_Colour::Red);
+			Term::Get()->Colour(Term::E_Colour::Reset);
 			continue;
 		}
 		const T_EisData& eis = device.tEis.value();
@@ -665,7 +671,8 @@ bool Core::BatchAverages(const std::vector<std::string> sIds)
 		eisBatchAvrg.insert({ freq, stats });
 		eisTable.AddRow({ freq, SU::RoundToStr(stats.mean), SU::RoundToStr(stats.stddev) });
 	}
-	std::cout << "\nAverage impedances" << std::endl;
+
+	Term::Get()->Println("\nAverage impedances");
 	eisTable.Print(TERM_BOLDGREEN);
 
 
@@ -676,7 +683,8 @@ bool Core::BatchAverages(const std::vector<std::string> sIds)
 	{
 		if (!device.tCv.has_value())
 		{
-			std::cout << device.sDeviceId << " is missing CV data" << std::endl;
+			Term::Get()->Println(device.sDeviceId + " is missing CV data", Term::E_Colour::Red);
+			Term::Get()->Colour(Term::E_Colour::Reset);
 			continue;
 		}
 		const T_CvData& cv = device.tCv.value();
@@ -694,7 +702,7 @@ bool Core::BatchAverages(const std::vector<std::string> sIds)
 	PrintTable cvTable({ " ", "Average", "Stddev" });
 	cvTable.AddRow({ "mC", std::to_string(cvBatchStats.mean), std::to_string(cvBatchStats.stddev) });
 	cvTable.AddRow({ "mC/cm^2", std::to_string(cvNormBatchStats.mean), std::to_string(cvNormBatchStats.stddev) });
-	std::cout << "\nAverage CSCs" << std::endl;
+	Term::Get()->Println("\nAverage CSCs");
 	cvTable.Print(TERM_BOLDBLUE);
 
 	
@@ -705,7 +713,8 @@ bool Core::BatchAverages(const std::vector<std::string> sIds)
 	{
 		if (!device.tCil.has_value())
 		{
-			std::cout << device.sDeviceId << " is missing EIS data" << std::endl;
+			Term::Get()->Println(device.sDeviceId + " is missing CIL data", Term::E_Colour::Red);
+			Term::Get()->Colour(Term::E_Colour::Reset);
 			continue;
 		}
 		const T_CilData& cil = device.tCil.value();
@@ -732,7 +741,7 @@ bool Core::BatchAverages(const std::vector<std::string> sIds)
 		cilNormBatchAvrg.insert({ pulseWidth, statsNorm});
 		cilTable.AddRow({ std::to_string(pulseWidth), std::to_string(stats.mean), std::to_string(stats.stddev), std::to_string(statsNorm.mean), std::to_string(stats.stddev) });
 	}
-	std::cout << "\nAverage CILs" << std::endl;
+	Term::Get()->Println("\nAverage CILs");
 	cilTable.Print(TERM_YELLOW);
 	return true;
 }
