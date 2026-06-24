@@ -8,6 +8,7 @@
 #include "CvData.h"
 #include "CilData.h"
 #include "Options.h"
+#include "Term.h"
 
 bool GrapherPy::Precheck()
 {
@@ -26,7 +27,7 @@ void GrapherPy::EisAverage(const std::string& sName, const T_ErrorPlotF& tZ, con
 		return;
 	}
 
-	std::cout << "Rendering EIS average..." << std::flush;
+	Term::Get()->Print("Rendering EIS average...");
 	std::string plotDataPath = GetTempPath(sName, "EIS");
 	{
 		// in a local scope to drop the CsvOut once its been exported
@@ -45,6 +46,7 @@ void GrapherPy::EisAverage(const std::string& sName, const T_ErrorPlotF& tZ, con
 		Options::Get().GetOpt<int>("plotter-fontsize-labels"),
 		Options::Get().GetOpt<int>("plotter-fontsize-ticks"),
 		Options::Get().GetOpt<int>("plotter-fontsize-title"));
+	Term::Get()->Println("Done\n");
 }
 
 void GrapherPy::EisSingle(const std::string& sId, const std::string& filename, const T_EisRawData& tRaw, bool bReplot)
@@ -57,7 +59,7 @@ void GrapherPy::EisSingle(const std::string& sId, const std::string& filename, c
 		return;
 	}
 
-	std::cout << "Rendering EIS for " + filename + "..." << std::flush;
+	Term::Get()->Print("Rendering EIS for " + filename + "...");
 	std::string plotDataPath = GetTempPath(sId + "-" + filename, "EIS");
 	{
 		// in a local scope to drop the CsvOut once its been exported
@@ -76,6 +78,7 @@ void GrapherPy::EisSingle(const std::string& sId, const std::string& filename, c
 		Options::Get().GetOpt<int>("plotter-fontsize-labels"),
 		Options::Get().GetOpt<int>("plotter-fontsize-ticks"),
 		Options::Get().GetOpt<int>("plotter-fontsize-title"));
+	Term::Get()->Println("Done");
 }
 
 void GrapherPy::CvAverage(const std::string& sName, T_ErrorPlotF tLoop, bool bReplot)
@@ -88,7 +91,7 @@ void GrapherPy::CvAverage(const std::string& sName, T_ErrorPlotF tLoop, bool bRe
 		return;
 	}
 
-	std::cout << "Rendering CV average..." << std::flush;
+	Term::Get()->Print("Rendering CV average...");
 	std::string plotDataPath = GetTempPath(sName, "CV");
 	{
 		// in a local scope to drop the CsvOut once its been exported
@@ -106,6 +109,7 @@ void GrapherPy::CvAverage(const std::string& sName, T_ErrorPlotF tLoop, bool bRe
 		Options::Get().GetOpt<int>("plotter-fontsize-labels"),
 		Options::Get().GetOpt<int>("plotter-fontsize-ticks"),
 		Options::Get().GetOpt<int>("plotter-fontsize-title"));
+	Term::Get()->Println("Done");
 }
 
 void GrapherPy::CvSingle(const std::string& sId, const std::string& filename, T_CvElectrodeData tRaw, bool bReplot)
@@ -118,7 +122,7 @@ void GrapherPy::CvSingle(const std::string& sId, const std::string& filename, T_
 		return;
 	}
 
-	std::cout << "Rendering CV for " + filename + "..." << std::flush;
+	Term::Get()->Print("Rendering CV for " + filename + "...");
 	std::string plotDataPath = GetTempPath(sId + "-" + filename, "CV");
 	{
 		std::vector<std::string> headers = { "x" };
@@ -145,6 +149,7 @@ void GrapherPy::CvSingle(const std::string& sId, const std::string& filename, T_
 		Options::Get().GetOpt<int>("plotter-fontsize-labels"),
 		Options::Get().GetOpt<int>("plotter-fontsize-ticks"),
 		Options::Get().GetOpt<int>("plotter-fontsize-title"));
+	Term::Get()->Println("Done");
 }
 
 void GrapherPy::CilAverage(const std::string& sName, const T_ErrorPlotF& tCil, bool bReplot)
@@ -157,7 +162,7 @@ void GrapherPy::CilAverage(const std::string& sName, const T_ErrorPlotF& tCil, b
 		return;
 	}
 
-	std::cout << "Rendering CIL average..." << std::flush;
+	Term::Get()->Print("Rendering CIL average...");
 	std::string plotDataPath = GetTempPath(sName, "CIL");
 	{
 		// in a local scope to drop the CsvOut once its been exported
@@ -174,6 +179,7 @@ void GrapherPy::CilAverage(const std::string& sName, const T_ErrorPlotF& tCil, b
 		Options::Get().GetOpt<int>("plotter-fontsize-labels"),
 		Options::Get().GetOpt<int>("plotter-fontsize-ticks"),
 		Options::Get().GetOpt<int>("plotter-fontsize-title"));
+	Term::Get()->Println("Done");
 }
 
 void GrapherPy::CilMulti(const std::string& sName, const T_CilData& data, bool bReplot)
@@ -186,7 +192,7 @@ void GrapherPy::CilMulti(const std::string& sName, const T_CilData& data, bool b
 		return;
 	}
 
-	std::cout << "Rendering CIL multiline..." << std::flush;
+	Term::Get()->Print("Rendering CIL multiline...");
 	std::string plotDataPath = GetTempPath(sName + "-multi", "CIL");
 	{
 		// in a local scope to drop the CsvOut once its been exported
@@ -213,6 +219,7 @@ void GrapherPy::CilMulti(const std::string& sName, const T_CilData& data, bool b
 		Options::Get().GetOpt<int>("plotter-fontsize-labels"),
 		Options::Get().GetOpt<int>("plotter-fontsize-ticks"),
 		Options::Get().GetOpt<int>("plotter-fontsize-title"));
+	Term::Get()->Println("Done");
 	
 }
 
@@ -256,7 +263,6 @@ void GrapherPy::CmdEis(
 	//std::cout << cmd << std::endl;
 	// python ./Scripts/Plotter.py <CD>/temp/test.csv -o <CD>/plots/test2.png --xlabel freq --ylabel imp --ylabel2 phase --ylim 1000,100000 --ylim2 -90 0 --label-fontsize 12 --tick-fontsize 20 --title scrungle --title-fontsize 5
 	system(cmd.c_str());
-	std::cout << "Done" << std::endl;
 }
 
 void GrapherPy::CmdCv(
@@ -283,7 +289,6 @@ void GrapherPy::CmdCv(
 
 	//std::cout << cmd << std::endl;
 	system(cmd.c_str());
-	std::cout << "Done" << std::endl;
 }
 
 void GrapherPy::CmdCil(
@@ -308,5 +313,4 @@ void GrapherPy::CmdCil(
 
 	//std::cout << cmd << std::endl;
 	system(cmd.c_str());
-	std::cout << "Done" << std::endl;
 }

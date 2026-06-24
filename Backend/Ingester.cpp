@@ -11,6 +11,7 @@
 #include "CvData.h"
 #include "JsonLoader.h"
 #include "Options.h"
+#include "Term.h"
 
 # define M_PI           3.14159265358979323846
 
@@ -19,7 +20,7 @@ Ingester::Ingester(std::filesystem::path deviceDirectory)
 	int verbosity = Options::Get().GetOpt<int>("ingest-verbosity");
 	if (verbosity > 0)
 	{
-		std::cout << "Files found..." << std::endl;
+		Term::Get()->Println("Files found...");
 	}
 	std::string path;
 	std::string colcmd;
@@ -43,31 +44,32 @@ Ingester::Ingester(std::filesystem::path deviceDirectory)
 			}
 			else if (path.find("EIS") != std::string::npos)
 			{
-				colcmd = TERM_BOLDRED;
+				Term::Get()->Colour(Term::E_Colour::RedBold);
 				m_vEisPaths.push_back(path);
 			}
 			else if (path.find("CV") != std::string::npos)
 			{
-				colcmd = TERM_BOLDBLUE;
+				Term::Get()->Colour(Term::E_Colour::BlueBold);
 				m_vCvPaths.push_back(path);
 			}
 			else if (path.find("CIL") != std::string::npos || path.find("VoltageTransients") != std::string::npos)
 			{
-				colcmd = TERM_BOLDYELLOW;
+				Term::Get()->Colour(Term::E_Colour::YellowBold);
 				m_vCilPaths.push_back(path);
 			}
 			else if (path.find("Crosstalk") != std::string::npos || path.find("Crossimpedance") != std::string::npos)
 			{
-				colcmd = TERM_CYAN;
+				Term::Get()->Colour(Term::E_Colour::Cyan);
 				m_vCrosstalkPaths.push_back(path);
 			}
 			else
 			{
-				colcmd = TERM_BOLDWHITE;
+				Term::Get()->Colour(Term::E_Colour::WhiteBold);
 			}
 			path.erase(0, deviceDirectory.string().length());
 			if (verbosity > 0)
 			{
+				Term::Get()->Print(" - ", )
 				std::cout << TERM_RESET << " - " << colcmd << path << std::endl;
 			}
 		}

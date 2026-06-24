@@ -2,6 +2,7 @@
 #include "GrapherMatplotplusplus.h"
 #include <algorithm>
 #include <matplot/matplot.h>
+#include "Term.h"
 #include "CvData.h"
 #include "CilData.h"
 #include "Ingester.h"
@@ -18,7 +19,7 @@ void GrapherMatplotplusplus::EisAverage(const std::string& sId, const T_ErrorPlo
 		return;
 	}
 
-	std::cout << "Rendering EIS plot... " << std::flush;
+	Term::Get()->Print("Rendering EIS plot...");
 	using namespace matplot;
 	auto fig = figure(true);
 	hold(false);
@@ -65,7 +66,7 @@ void GrapherMatplotplusplus::EisAverage(const std::string& sId, const T_ErrorPlo
 	xlabel("Frequency (Hz)");
 
 	save(file);
-	std::cout << "Done\n" << std::endl;
+	Term::Get()->Println("Done\n");
 }
 
 void GrapherMatplotplusplus::EisSingle(const std::string& sId, const std::string& filename, const T_EisRawData& tRaw, bool bReplot)
@@ -114,7 +115,7 @@ void GrapherMatplotplusplus::CvAverage(const std::string& sId, T_ErrorPlotF tLoo
 	matplot::gcf()->width(m_nCvWidth);
 	matplot::gcf()->height(m_nCvHeight);
 	save(file);
-	std::cout << "Done\n" << std::endl;
+	Term::Get()->Println("Done\n");
 }
 
 void GrapherMatplotplusplus::CvSingle(const std::string& sId, const std::string& filename, T_CvElectrodeData tElectrode, bool bReplot)
@@ -147,7 +148,7 @@ void GrapherMatplotplusplus::CvSingle(const std::string& sId, const std::string&
 	matplot::gcf()->width(m_nCvWidth);
 	matplot::gcf()->height(m_nCvHeight);
 	matplot::save(file);
-	std::cout << "Done" << std::endl;
+	Term::Get()->Println("Done\n");
 }
 
 void GrapherMatplotplusplus::CilAverage(const std::string& sId, const T_ErrorPlotF& data, bool bReplot)
