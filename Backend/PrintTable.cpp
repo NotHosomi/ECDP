@@ -1,66 +1,79 @@
 #include "PrintTable.h"
 #include <iomanip>
 #include <iostream>
-#include "TerminalColours.h"
+#include "Term.h"
 #include "StrUtils.h"
 
-PrintTable::PrintTable(const std::vector<std::string>& vHeaders) :
-	m_vHeaders(vHeaders)
+PrintTable::PrintTable(const std::vector<std::string>& vHeaders)
 {
-	m_vColumnWidths.resize(m_vHeaders.size());
-	for (int i = 0; i < m_vHeaders.size(); ++i)
+	for(const auto & str : vHeaders)
 	{
-		m_vColumnWidths[i] = static_cast<int>(m_vHeaders[i].size());
+		m_tHeaders.vCells.push_back({ str, Term::E_Colour::None });
+	}
+
+	m_vColumnWidths.resize(m_tHeaders.vCells.size());
+	for (int i = 0; i < m_tHeaders.vCells.size(); ++i)
+	{
+		m_vColumnWidths[i] = static_cast<int>(m_tHeaders.vCells[i].sText.size()) + 1;
 	}
 }
 
 void PrintTable::AddRow(const std::vector<std::string>& vRow, std::string sColourCode)
 {
-	m_vRows.push_back(vRow);
-	m_vRowColours.push_back(sColourCode);
-	UpdateColWidths(vRow);
+	std::vector<T_Cell> cells;
+	for (const auto& str : vRow)
+	{
+		cells.emplace_back(str, Term::E_Colour::None);
+	}
+	m_vRows.emplace_back(cells, sColourCode);
+	UpdateColWidths(m_vRows.back());
 	for (int i = 0; i < vRow.size(); ++i)
 	{
 		m_vColumnWidths[i] = std::max(m_vColumnWidths[i], static_cast<int>(vRow[i].size()));
 	}
 }
 
-void PrintTable::Print(std::string sColour)
+void PrintTable::Print(Term::E_Colour eColour)
 {
-	std::cout << sColour;
-	PrintRow(m_vHeaders);
+	Term::Get()->Colour(eColour);
+	PrintRow(m_tHeaders);
 
-	std::cout << "  |" << std::setfill('-');
-	for (auto colWidth : m_vColumnWidths)
+	// todo: add fill to Term class
+	std::string divider = "  |";
+	for (const auto& width : m_vColumnWidths)
 	{
-		std::cout << std::setw(colWidth + 3) << "|";
+		for (int i = 0; i < width; ++i)
+		{
+			divider += "-";
+		}
+		divider += "|";
 	}
-	std::cout << std::setfill(' ') << std::endl;
+	Term::Get()->Print(divider);
 
 	for (int row = 0; row < m_vRows.size(); ++row)
 	{
-		std::cout << m_vRowColours[row];
 		PrintRow(m_vRows[row]);
-		std::cout << sColour;
 	}
-	std::cout << TERM_RESET;
+	Term::Get()->Colour(Term::E_Colour::Reset);
 }
 
-void PrintTable::PrintRow(const std::vector<std::string>& vRow)
+void PrintTable::PrintRow(const T_Row& tRow)
 {
-	std::cout << "  |";
-	for (int col = 0; col < m_vHeaders.size(); ++col)
+	Term::Get()->Print("  |", tRow.eColour);
+	for (int col = 0; col < m_tHeaders.vCells.size(); ++col)
 	{
-		std::string cellprint = vRow[col] + " |";
-		std::cout << std::setw(m_vColumnWidths[col]+3) << cellprint;
+		const auto& cell = tRow.vCells[col];
+		Term::Get()->Colour(cell.eColour);
+		Term::Get()->Print(cell.sText, cell.eColour, m_vColumnWidths[col]);
+		Term::Get()->Print(" |", tRow.eColour);
 	}
-	std::cout << std::endl;
+	Term::Get()->Println("");
 }
 
-void PrintTable::UpdateColWidths(const std::vector<std::string>& vRow)
+void PrintTable::UpdateColWidths(const T_Row& tRow)
 {
-	for (int i = 0; i < m_vHeaders.size(); ++i)
+	for (int i = 0; i < m_tHeaders.vCells.size(); ++i)
 	{
-		m_vColumnWidths[i] = std::max(m_vColumnWidths[i], static_cast<int>(vRow[i].size()));
+		m_vColumnWidths[i] = std::max(m_vColumnWidths[i], static_cast<int>(tRow.vCells[i].sText.length()) + 1);
 	}
 }

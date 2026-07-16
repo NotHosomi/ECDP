@@ -3,6 +3,7 @@
 #include <vector>
 #include <type_traits>
 #include "StrUtils.h"
+#include "Term.h"
 
 class PrintTable
 {
@@ -13,13 +14,23 @@ public:
 	template <typename T>
 	void AddRow(const std::string& key, const std::vector<T>& vRow, std::string sColourCode = "", bool bRound = false);
 
-	void Print(std::string sColour = "");
+	void Print(Term::E_Colour eColour = Term::E_Colour::Reset);
 private:
-	void PrintRow(const std::vector<std::string>& vRow);
-	void UpdateColWidths(const std::vector<std::string>& vRow);
-	std::vector<std::vector<std::string>> m_vRows;
-	std::vector<std::string> m_vRowColours;
-	std::vector<std::string> m_vHeaders;
+	struct T_Cell
+	{
+		std::string sText;
+		Term::E_Colour eColour;
+	};
+	struct T_Row
+	{
+		std::vector<T_Cell> vCells;
+		Term::E_Colour eColour;
+	};
+
+	void PrintRow(const T_Row& vRow);
+	void UpdateColWidths(const T_Row& vRow);
+	std::vector<T_Row> m_vRows;
+	T_Row m_tHeaders;
 	std::vector<int> m_vColumnWidths;
 };
 

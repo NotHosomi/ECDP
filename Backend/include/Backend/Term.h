@@ -31,7 +31,7 @@ public:
 		WhiteBold
 	};
 
-	virtual void Print(const std::string& sText, E_Colour sColour = E_Colour::None) = 0;
+	virtual void Print(const std::string& sText, E_Colour sColour = E_Colour::None, size_t nWidth = 0) = 0;
 	virtual void Println(const std::string& sText, E_Colour sColour = E_Colour::None) = 0;
 	virtual void Colour(E_Colour sColour) = 0;
 	virtual void AddToBuffer(const std::string& sText, E_Colour sColour = E_Colour::None) = 0;

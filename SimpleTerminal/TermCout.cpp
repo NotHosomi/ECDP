@@ -2,9 +2,9 @@
 #include <iostream>
 #include "TerminalColours.h"
 
-void TermCout::Print(const std::string& sText, E_Colour sColour)
+void TermCout::Print(const std::string& sText, E_Colour sColour, size_t nWidth)
 {
-	std::cout << GetTermCol(sColour) << sText << std::flush;
+	std::cout << GetTermCol(sColour) << std::setw(nWidth + 1) << sText << std::flush;
 }
 
 void TermCout::Println(const std::string& sText, E_Colour sColour)
