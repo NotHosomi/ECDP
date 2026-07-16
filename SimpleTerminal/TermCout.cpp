@@ -77,3 +77,21 @@ const std::string& TermCout::GetTermCol(E_Colour eCol)
 		return "";
 	};
 }
+
+
+void TermCout::Read(std::string& rInput)
+{
+	ReadImpl(rInput);
+}
+void TermCout::Read(int& rInput)
+{
+	ReadImpl(rInput);
+}
+void TermCout::Read(double& rInput)
+{
+	ReadImpl(rInput);
+}
+void TermCout::Read(float& rInput)
+{
+	ReadImpl(rInput);
+}

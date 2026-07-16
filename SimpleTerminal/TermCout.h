@@ -11,7 +11,25 @@ public:
 	void AddToBuffer(const std::string& sText, E_Colour sColour = E_Colour::None) override;
 	void Flush() override;
 	void Endline() override;
+
+	void Read(std::string& rInput);
+	void Read(int& rInput);
+	void Read(double& rInput);
+	void Read(float& rInput);
 private:
 	const std::string& GetTermCol(E_Colour eCol);
+
+	template<typename T>
+	void ReadImpl(T& rInput);
 };
 
+template<typename T>
+inline void TermCout::ReadImpl(T& rInput)
+{
+	while (!(std::cin >> rInput))
+	{
+		std::cout << "Bad type, try again: " << std::flush;
+		std::cin.clear();
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+	}
+}

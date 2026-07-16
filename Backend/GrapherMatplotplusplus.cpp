@@ -71,7 +71,7 @@ void GrapherMatplotplusplus::EisAverage(const std::string& sId, const T_ErrorPlo
 
 void GrapherMatplotplusplus::EisSingle(const std::string& sId, const std::string& filename, const T_EisRawData& tRaw, bool bReplot)
 {
-	std::cout << "EisSingle not implemented yet with Internal backend" << std::endl;
+	Term::Get()->Println("EisSingle not implemented yet with Internal backend");
 }
 
 void GrapherMatplotplusplus::CvAverage(const std::string& sId, T_ErrorPlotF tLoop, bool bReplot)
@@ -86,11 +86,11 @@ void GrapherMatplotplusplus::CvAverage(const std::string& sId, T_ErrorPlotF tLoo
 
 	if (tLoop.x.size() == 0)
 	{
-		std::cout << "Cannot render CV plot" << std::endl;
+		Term::Get()->Println("Cannot render CV plot");
 		return;
 	}
 	using namespace matplot;
-	std::cout << "Rendering CV plot... " << std::flush;
+	Term::Get()->Print("Rendering CV plot...");
 
 	// make the data loop
 	tLoop.x.push_back(tLoop.x.front());
@@ -127,7 +127,7 @@ void GrapherMatplotplusplus::CvSingle(const std::string& sId, const std::string&
 	{
 		return;
 	}
-	std::cout << "Rendering CV plot (" << filename << ")... " << std::flush;
+	Term::Get()->Print("Rendering CV plot (" + filename + ")... ");
 
 	matplot::figure(true);
 	matplot::hold(true);
@@ -153,11 +153,11 @@ void GrapherMatplotplusplus::CvSingle(const std::string& sId, const std::string&
 
 void GrapherMatplotplusplus::CilAverage(const std::string& sId, const T_ErrorPlotF& data, bool bReplot)
 {
-	std::cout << "CilAverage not implemented yet with Internal backend" << std::endl;
+	Term::Get()->Println("CilAverage not implemented yet with Internal plotting backend");
 }
 
 void GrapherMatplotplusplus::CilMulti(const std::string& sId, const T_CilData& data, bool bReplot)
 {
-	std::cout << "CilAverage not implemented yet with Internal backend" << std::endl;
+	Term::Get()->Println("CilMulti not implemented yet with Internal plotting backend");
 }
 

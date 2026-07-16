@@ -69,34 +69,28 @@ Ingester::Ingester(std::filesystem::path deviceDirectory)
 			path.erase(0, deviceDirectory.string().length());
 			if (verbosity > 0)
 			{
-				Term::Get()->Print(" - ", )
-				std::cout << TERM_RESET << " - " << colcmd << path << std::endl;
+				Term::Get()->Println(" - " + path);
 			}
 		}
-		std::cout << TERM_RESET;
+		Term::Get()->Colour(Term::E_Colour::Reset);
 	}
 
 	if (!LoadJson<T_DeviceInfo>(deviceDirectory / "DeviceInfo.json", m_tDeviceInfo))
 	{
-		std::cout << "Could not read device details" << std::endl;
-		std::cout << "Electrode diameter (microns): ";
-		while (!(std::cin >> m_tDeviceInfo.electrodeDiameter))
-		{
-			std::cin.clear();
-			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		}
-		std::cout << "Electrode count: ";
-		while (!(std::cin >> m_tDeviceInfo.electrodeCount))
-		{
-			std::cin.clear();
-			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-		}
-		std::cout << "Storing device details..." << std::flush;
+		Term::Get()->Println("Could not read device details");
+
+		Term::Get()->Print("Electrode diameter (microns): ");
+		Term::Get()->Read(m_tDeviceInfo.electrodeDiameter);
+
+		Term::Get()->Print("Electrode count: ");
+		Term::Get()->Read(m_tDeviceInfo.electrodeCount);
+
+		Term::Get()->Print("Storing device details...");
 		if (!SaveJson(deviceDirectory / "DeviceInfo.json", m_tDeviceInfo))
 		{
-			std::cout << "Failed to save device details" << std::endl;
+			Term::Get()->Println("Failed to save device details");
 		}
-		std::cout << "Done" << std::endl;
+		Term::Get()->Println("Done");
 	}
 }
 
@@ -140,7 +134,8 @@ T_CvElectrodeData Ingester::parseCvFile(const CsvFile& csv) const
 	}
 	catch (std::exception e)
 	{
-		std::cout << TERM_RED << "Failed to parse CV file \"" << csv.GetFilename() << "\"" << TERM_RESET << std::endl;
+		Term::Get()->Println("Failed to parse CV file \"" + csv.GetFilename() + "\"", Term::E_Colour::Red);
+		Term::Get()->Colour(Term::E_Colour::Reset);
 		return {};
 	}
 }
@@ -160,14 +155,14 @@ double Ingester::hysteresisArea(const std::vector<double>& x, const std::vector<
 
 T_EisData Ingester::ParseEis(const std::vector<std::string>& vKeyVals) const
 {
-	std::cout << "\nReading EIS file..." << std::flush;
+	Term::Get()->Print("\nReading EIS file...");
 	T_EisData out;
 	out.vFrequencies = vKeyVals;
 
 	std::vector<CsvFile> csvList = readFiles(m_vEisPaths);
 	if (csvList.size() == 0)
 	{
-		std::cout << "Failed - No EIS files" << std::endl;
+		Term::Get()->Println("Failed - No EIS files");
 		return {};
 	}
 
@@ -205,7 +200,7 @@ T_EisData Ingester::ParseEis(const std::vector<std::string>& vKeyVals) const
 		out.vAverages.push_back(stats.mean);
 		out.vStddev.push_back(stats.stddev);
 	}
-	std::cout << "Done" << std::endl;
+	Term::Get()->Println("Done");
 	return out;
 }
 
@@ -213,10 +208,11 @@ T_CvData Ingester::CalculateCscVals() const
 {
 	T_CvData tOutput;
 	std::map<std::string, T_CvElectrodeData> mOutput;
-	std::cout << "Reading CV..." << std::endl;
+	Term::Get()->Print("Reading CV...");
 	std::vector<CsvFile> csvList = readFiles(m_vCvPaths);
+	Term::Get()->Println("Done");
 
-	std::cout << "Calculating CSCs..." << std::endl;
+	Term::Get()->Print("Calculating CSCs...");
 	for(auto entry : csvList)
 	{
 		T_CvElectrodeData tElecData = parseCvFile(entry);
@@ -263,6 +259,7 @@ T_CvData Ingester::CalculateCscVals() const
 	}
 	tOutput.tCsc = stddev(vCscs);
 	tOutput.tCscNorm = stddev(vCscNorms);
+	Term::Get()->Println("Done");
 	return tOutput;
 }
 
@@ -270,14 +267,14 @@ T_CilData Ingester::CalculateCilVals() const
 {
 	if (m_vCilPaths.size() == 0)
 	{
-		std::cout << "\nNo voltage transients data found" << std::endl;
+		Term::Get()->Println("\nNo voltage transients data found");
 		return {};
 	}
-	std::cout << "\nReading voltage transients..." << std::endl;
+	Term::Get()->Println("\nReading voltage transients...");
 	T_CilData output;
 	if (m_vCilPaths.size() > 1)
 	{
-		std::cout << "Multiple voltage transient files found. Using " + m_vCilPaths[0].filename().string() << std::endl;
+		Term::Get()->Print("Multiple voltage transient files found. Using " + m_vCilPaths[0].filename().string());
 	}
 	CsvFile csv(m_vCilPaths[0].string());
 	if (csv.GetHeadings().size() <= 1)
@@ -285,7 +282,7 @@ T_CilData Ingester::CalculateCilVals() const
 		csv = CsvFile(m_vCilPaths[0].string(), ';');
 		if (csv.GetHeadings().size() <= 1)
 		{
-			std::cout << "Could not read voltage transients file" << std::endl;
+			Term::Get()->Print("Could not read voltage transients file");
 			return {}; // todo, try other VT files before giving up
 		}
 	}

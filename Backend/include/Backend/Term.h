@@ -37,6 +37,10 @@ public:
 	virtual void AddToBuffer(const std::string& sText, E_Colour sColour = E_Colour::None) = 0;
 	virtual void Flush() = 0;
 	virtual void Endline() = 0;
+	virtual void Read(std::string& rInput) = 0;
+	virtual void Read(int& rInput) = 0;
+	virtual void Read(double& rInput) = 0;
+	virtual void Read(float& rInput) = 0;
 protected:
 	E_Colour m_eCol = E_Colour::None;
 	std::string m_sBuffer;

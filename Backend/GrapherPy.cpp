@@ -260,8 +260,6 @@ void GrapherPy::CmdEis(
 	cmd += " --tick-fontsize " + std::to_string(uTickFontsize);
 	cmd += " --title-fontsize " + std::to_string(uTitleFontsize);
 	
-	//std::cout << cmd << std::endl;
-	// python ./Scripts/Plotter.py <CD>/temp/test.csv -o <CD>/plots/test2.png --xlabel freq --ylabel imp --ylabel2 phase --ylim 1000,100000 --ylim2 -90 0 --label-fontsize 12 --tick-fontsize 20 --title scrungle --title-fontsize 5
 	system(cmd.c_str());
 }
 
@@ -287,7 +285,6 @@ void GrapherPy::CmdCv(
 	cmd += " --tick-fontsize " + std::to_string(uTickFontsize);
 	cmd += " --title-fontsize " + std::to_string(uTitleFontsize);
 
-	//std::cout << cmd << std::endl;
 	system(cmd.c_str());
 }
 
@@ -311,6 +308,5 @@ void GrapherPy::CmdCil(
 	cmd += " --tick-fontsize " + std::to_string(uTickFontsize);
 	cmd += " --title-fontsize " + std::to_string(uTitleFontsize);
 
-	//std::cout << cmd << std::endl;
 	system(cmd.c_str());
 }

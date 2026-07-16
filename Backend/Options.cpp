@@ -1,12 +1,13 @@
 #include "Options.h"
 #include <iostream>
 #include "JsonLoader.h"
+#include "Term.h"
 
 Options::Options()
 {
 	if (!LoadOpts())
 	{
-		std::cout << "Using defaults" << std::endl;
+		Term::Get()->Println("Using defaults");
 		m_mOptions.clear();
 	}
 
@@ -84,22 +85,22 @@ bool Options::SaveOpts(const std::string& sFilename)
 	std::filesystem::create_directory("options");
 	if (!Serialise("./options/" + sFilename + ".json"))
 	{
-		std::cout << "Failed to save options" << std::endl;
+		Term::Get()->Println("Failed to save options");
 		return false;
 	}
-	std::cout << "Saved" << std::endl;
+	Term::Get()->Println("Saved");
 	return true;
 }
 
 bool Options::LoadOpts(const std::string& sFilename)
 {
-	std::cout << "Loading options \"" + sFilename + ".json\"..." << std::flush;
+	Term::Get()->Print("Loading options \"" + sFilename + ".json\"...");
 	if (!Deserialise("./options/" + sFilename + ".json"))
 	{
-		std::cout << "Failed" << std::endl;
+		Term::Get()->Println("Failed");
 		return false;
 	}
-	std::cout << "Done" << std::endl;
+	Term::Get()->Println("Done");
 	return true;
 }
 
@@ -178,7 +179,7 @@ bool Options::Deserialise(const std::string& sFilename)
 		}
 		catch(std::invalid_argument e)
 		{
-			std::cout << sFilename << " has corrupted value at \"name\": \"" << jopt.name << "\"..." << std::flush;
+			Term::Get()->Print(sFilename + " has corrupted value at \"name\": \"" + jopt.name + "\"...");
 			return false;
 		}
 		temp.insert({ opt.sName, opt });
