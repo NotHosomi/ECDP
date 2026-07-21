@@ -21,7 +21,7 @@ public:
 	void CilMulti(const std::string& sId, const T_CilData& data, bool bReplot = false) override;
 
 private:
-	std::string GetTempPath(const std::string& sName, const std::string& sMode);
+	std::string GetTempPlotPath(const std::string& sName, const std::string& sMode);
 
 	void CmdEis(
 		const std::string& sPlotDataPath,

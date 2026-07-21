@@ -10,6 +10,21 @@
 #include "Options.h"
 #include "Term.h"
 
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
+namespace
+{
+	void systemw(const std::string& sUtf8Cmd)
+	{
+		int iSize = MultiByteToWideChar(CP_UTF8, 0, sUtf8Cmd.c_str(), -1, nullptr, 0);
+		std::wstring wCmd(iSize, L'\0');
+		MultiByteToWideChar(CP_UTF8, 0, sUtf8Cmd.c_str(), -1, wCmd.data(), iSize);
+		wCmd.resize(iSize - 1);
+		_wsystem(wCmd.c_str());
+	}
+}
+
 bool GrapherPy::Precheck()
 {
 	return system(NULL) != 0;
@@ -28,7 +43,7 @@ void GrapherPy::EisAverage(const std::string& sName, const T_ErrorPlotF& tZ, con
 	}
 
 	Term::Get()->Print("Rendering EIS average...");
-	std::string plotDataPath = GetTempPath(sName, "EIS");
+	std::string plotDataPath = GetTempPlotPath(sName, "EIS");
 	{
 		// in a local scope to drop the CsvOut once its been exported
 		CsvOut transfer({ "x","y","yerr","y2","y2err" });
@@ -60,7 +75,7 @@ void GrapherPy::EisSingle(const std::string& sId, const std::string& filename, c
 	}
 
 	Term::Get()->Print("Rendering EIS for " + filename + "...");
-	std::string plotDataPath = GetTempPath(sId + "-" + filename, "EIS");
+	std::string plotDataPath = GetTempPlotPath(sId + "-" + filename, "EIS");
 	{
 		// in a local scope to drop the CsvOut once its been exported
 		CsvOut transfer({ "x","y","y2" });
@@ -92,7 +107,7 @@ void GrapherPy::CvAverage(const std::string& sName, T_ErrorPlotF tLoop, bool bRe
 	}
 
 	Term::Get()->Print("Rendering CV average...");
-	std::string plotDataPath = GetTempPath(sName, "CV");
+	std::string plotDataPath = GetTempPlotPath(sName, "CV");
 	{
 		// in a local scope to drop the CsvOut once its been exported
 		CsvOut transfer({ "x","y","yerr" });
@@ -123,7 +138,7 @@ void GrapherPy::CvSingle(const std::string& sId, const std::string& filename, T_
 	}
 
 	Term::Get()->Print("Rendering CV for " + filename + "...");
-	std::string plotDataPath = GetTempPath(sId + "-" + filename, "CV");
+	std::string plotDataPath = GetTempPlotPath(sId + "-" + filename, "CV");
 	{
 		std::vector<std::string> headers = { "x" };
 		for (int i = 1; i <= tRaw.vLoops.size(); ++i)
@@ -163,7 +178,7 @@ void GrapherPy::CilAverage(const std::string& sName, const T_ErrorPlotF& tCil, b
 	}
 
 	Term::Get()->Print("Rendering CIL average...");
-	std::string plotDataPath = GetTempPath(sName, "CIL");
+	std::string plotDataPath = GetTempPlotPath(sName, "CIL");
 	{
 		// in a local scope to drop the CsvOut once its been exported
 		CsvOut transfer({ "x","y","yerr" });
@@ -193,7 +208,7 @@ void GrapherPy::CilMulti(const std::string& sName, const T_CilData& data, bool b
 	}
 
 	Term::Get()->Print("Rendering CIL multiline...");
-	std::string plotDataPath = GetTempPath(sName + "-multi", "CIL");
+	std::string plotDataPath = GetTempPlotPath(sName + "-multi", "CIL");
 	{
 		// in a local scope to drop the CsvOut once its been exported
 		std::vector<std::string> headers = { "x" };
@@ -223,7 +238,7 @@ void GrapherPy::CilMulti(const std::string& sName, const T_CilData& data, bool b
 	
 }
 
-std::string GrapherPy::GetTempPath(const std::string& sName, const std::string& sMode)
+std::string GrapherPy::GetTempPlotPath(const std::string& sName, const std::string& sMode)
 {
 	std::filesystem::create_directory("./temp/");
 	if (Options::Get().GetOpt<bool>("plotter-hold-temp"))
@@ -260,7 +275,7 @@ void GrapherPy::CmdEis(
 	cmd += " --tick-fontsize " + std::to_string(uTickFontsize);
 	cmd += " --title-fontsize " + std::to_string(uTitleFontsize);
 	
-	system(cmd.c_str());
+	systemw(cmd);
 }
 
 void GrapherPy::CmdCv(
@@ -285,7 +300,7 @@ void GrapherPy::CmdCv(
 	cmd += " --tick-fontsize " + std::to_string(uTickFontsize);
 	cmd += " --title-fontsize " + std::to_string(uTitleFontsize);
 
-	system(cmd.c_str());
+	systemw(cmd);
 }
 
 void GrapherPy::CmdCil(
@@ -308,5 +323,5 @@ void GrapherPy::CmdCil(
 	cmd += " --tick-fontsize " + std::to_string(uTickFontsize);
 	cmd += " --title-fontsize " + std::to_string(uTitleFontsize);
 
-	system(cmd.c_str());
+	systemw(cmd);
 }
