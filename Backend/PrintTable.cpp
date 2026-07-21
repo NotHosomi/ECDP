@@ -1,6 +1,7 @@
 #include "PrintTable.h"
 #include <iomanip>
 #include <iostream>
+#include <assert.h>
 #include "Term.h"
 #include "StrUtils.h"
 
@@ -18,19 +19,26 @@ PrintTable::PrintTable(const std::vector<std::string>& vHeaders)
 	}
 }
 
-void PrintTable::AddRow(const std::vector<std::string>& vRow, std::string sColourCode)
+void PrintTable::AddRow(const std::vector<std::string>& vRow, Term::E_Colour eRowColour)
 {
 	std::vector<T_Cell> cells;
 	for (const auto& str : vRow)
 	{
 		cells.emplace_back(str, Term::E_Colour::None);
 	}
-	m_vRows.emplace_back(cells, sColourCode);
+	m_vRows.emplace_back(cells, eRowColour);
 	UpdateColWidths(m_vRows.back());
 	for (int i = 0; i < vRow.size(); ++i)
 	{
 		m_vColumnWidths[i] = std::max(m_vColumnWidths[i], static_cast<int>(vRow[i].size()));
 	}
+}
+
+void PrintTable::AddRow(const std::vector<std::string>& vRow, const std::vector<Term::E_Colour> eCellColours, Term::E_Colour eRowColour)
+{
+	assert(vRow.size() == eCellColours.size());
+
+	// todo
 }
 
 void PrintTable::Print(Term::E_Colour eColour)

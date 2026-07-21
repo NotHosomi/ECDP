@@ -7,6 +7,7 @@
 #include <Backend/Core.h>
 #include <Backend/StrUtils.h>
 #include <Backend/Options.h>
+#include "TermCout.h"
 
 #include "Commands.h"
 
@@ -18,7 +19,7 @@ int main(int argc, char* argv[])
 {
 	//SetConsoleOutputCP(CP_UTF8);
 	std::cout << TERM_RESET;
-
+	Term::Set(new TermCout());
 	Options::Get();
 	Core core;
 	Commands cmd(&core);
@@ -36,4 +37,5 @@ int main(int argc, char* argv[])
 	}
 	Options::Get().SaveOpts();
 	std::cout << "Terminating..." << std::endl;
+	Term::Delete();
 }

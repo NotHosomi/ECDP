@@ -1,13 +1,15 @@
 #pragma once
 #include <string>
+#include "dllspec.h"
 
 class Term
 {
 private:
 	static Term* ms_pInstance;
 public:
-	static Term* Get();
-	static void Set(Term* pNewInstance);
+	static DLL Term* Get();
+	static DLL void Set(Term* pNewInstance);
+	static DLL void Delete();
 
 	enum class E_Colour
 	{
@@ -31,16 +33,16 @@ public:
 		WhiteBold
 	};
 
-	virtual void Print(const std::string& sText, E_Colour sColour = E_Colour::None, size_t nWidth = 0) = 0;
-	virtual void Println(const std::string& sText, E_Colour sColour = E_Colour::None) = 0;
-	virtual void Colour(E_Colour sColour) = 0;
-	virtual void AddToBuffer(const std::string& sText, E_Colour sColour = E_Colour::None) = 0;
-	virtual void Flush() = 0;
-	virtual void Endline() = 0;
-	virtual void Read(std::string& rInput) = 0;
-	virtual void Read(int& rInput) = 0;
-	virtual void Read(double& rInput) = 0;
-	virtual void Read(float& rInput) = 0;
+	DLL virtual void Print(const std::string& sText, E_Colour sColour = E_Colour::None, size_t nWidth = 0) = 0;
+	DLL virtual void Println(const std::string& sText, E_Colour sColour = E_Colour::None) = 0;
+	DLL virtual void Colour(E_Colour sColour) = 0;
+	DLL virtual void AddToBuffer(const std::string& sText, E_Colour sColour = E_Colour::None) = 0;
+	DLL virtual void Flush() = 0;
+	DLL virtual void Endline() = 0;
+	DLL virtual void Read(std::string& rInput) = 0;
+	DLL virtual void Read(int& rInput) = 0;
+	DLL virtual void Read(double& rInput) = 0;
+	DLL virtual void Read(float& rInput) = 0;
 protected:
 	E_Colour m_eCol = E_Colour::None;
 	std::string m_sBuffer;

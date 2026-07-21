@@ -10,9 +10,10 @@ class PrintTable
 public:
 	PrintTable(const std::vector<std::string>& vHeaders);
 
-	void AddRow(const std::vector<std::string>& vRow, std::string sColourCode = "");
+	void AddRow(const std::vector<std::string>& vRow, Term::E_Colour eRowColour = Term::E_Colour::Reset);
+	void AddRow(const std::vector<std::string>& vRow, const std::vector<Term::E_Colour> eCellColours, Term::E_Colour eRowColour = Term::E_Colour::Reset);
 	template <typename T>
-	void AddRow(const std::string& key, const std::vector<T>& vRow, std::string sColourCode = "", bool bRound = false);
+	void AddRow(const std::string& key, const std::vector<T>& vRow, Term::E_Colour sColourCode = Term::E_Colour::Reset, bool bRound = false);
 
 	void Print(Term::E_Colour eColour = Term::E_Colour::Reset);
 private:
@@ -35,7 +36,7 @@ private:
 };
 
 template<typename T>
-inline void PrintTable::AddRow(const std::string& key, const std::vector<T>& vRow, std::string sColourCode, bool bRound)
+inline void PrintTable::AddRow(const std::string& key, const std::vector<T>& vRow, Term::E_Colour eColour, bool bRound)
 {
 	std::vector<std::string> row;
 	row.push_back(key);
@@ -64,5 +65,5 @@ inline void PrintTable::AddRow(const std::string& key, const std::vector<T>& vRo
 			}
 		}
 	}
-	AddRow(row, sColourCode);
+	AddRow(row, eColour);
 }

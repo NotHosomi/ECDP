@@ -1,5 +1,6 @@
 #include "TermCout.h"
 #include <iostream>
+#include <iomanip>
 #include "TerminalColours.h"
 
 void TermCout::Print(const std::string& sText, E_Colour sColour, size_t nWidth)
@@ -33,7 +34,7 @@ void TermCout::Endline()
 	std::cout << std::endl;
 }
 
-const std::string& TermCout::GetTermCol(E_Colour eCol)
+const std::string TermCout::GetTermCol(E_Colour eCol)
 {
 	switch (eCol)
 	{

@@ -25,8 +25,7 @@ Core::Core()
 				Term::Get()->Println("Data path \"" + dataPath + "\" does not exist", Term::E_Colour::RedBold);
 			}
 			Term::Get()->Print("Please specify data directory: ");
-			std::cin >> dataPath; // todo: add reading user input to the Term class?
-			std::cin.clear();
+			Term::Get()->Read(dataPath);
 		} while (!std::filesystem::exists(dataPath));
 		Options::Get().SetOpt("ingest-dir", dataPath);
 	}
@@ -247,17 +246,17 @@ void Core::PrintEisVals(const T_EisData& tEisData, const std::vector<std::string
 	PrintTable EisTable(headers);
 	std::vector<std::string> eisExclusionList;
 	std::vector<std::string> newRow;
-	std::string colour;
+	Term::E_Colour colour;
 	for (const auto& [electrode, impedances] : tEisData.mImpedances)
 	{
-		colour = TERM_GREEN;
+		colour = Term::E_Colour::Green;
 		if (std::any_of(impedances.begin(), impedances.end(), [](double val)
 			{
 				return val > Options::Get().GetOpt<int>("eis-threshold-upper-yellow") ||
 					val < Options::Get().GetOpt<int>("eis-threshold-lower-yellow");
 			}))
 		{
-			colour = TERM_YELLOW;
+			colour = Term::E_Colour::Yellow;
 		}
 		if (std::any_of(impedances.begin(), impedances.end(), [](double val)
 			{
@@ -265,19 +264,19 @@ void Core::PrintEisVals(const T_EisData& tEisData, const std::vector<std::string
 					val < Options::Get().GetOpt<int>("eis-threshold-lower-red");
 			}))
 		{
-			colour = TERM_RED;
+			colour = Term::E_Colour::Red;
 			eisExclusionList.push_back(electrode);
 		}
 		EisTable.AddRow(electrode, impedances, colour);
 	}
-	colour = TERM_GREEN;
+	colour = Term::E_Colour::Green;
 	if (std::any_of(tEisData.vAverages.begin(), tEisData.vAverages.end(), [](double val)
 		{
 			return val > Options::Get().GetOpt<int>("eis-threshold-upper-yellow") ||
 				val < Options::Get().GetOpt<int>("eis-threshold-lower-yellow");
 		}))
 	{
-		colour = TERM_YELLOW;
+		colour = Term::E_Colour::Yellow;
 	}
 	if (std::any_of(tEisData.vAverages.begin(), tEisData.vAverages.end(), [](double val)
 		{
@@ -285,11 +284,11 @@ void Core::PrintEisVals(const T_EisData& tEisData, const std::vector<std::string
 				val < Options::Get().GetOpt<int>("eis-threshold-lower-red");
 		}))
 	{
-		colour = TERM_RED;
+		colour = Term::E_Colour::Red;
 	}
 	EisTable.AddRow("AVRG", tEisData.vAverages);
 	EisTable.AddRow("STDDEV", tEisData.vStddev);
-	EisTable.Print(TERM_BOLDRED);
+	EisTable.Print(Term::E_Colour::RedBold);
 }
 
 void Core::PrintCscVals(const T_CvData& tCvData)
@@ -298,17 +297,17 @@ void Core::PrintCscVals(const T_CvData& tCvData)
 	double sum = 0.0;
 	for (const auto& iter : tCvData.mElectrodes)
 	{
-		std::string colour = "";
+		Term::E_Colour colour = Term::E_Colour::None;
 		if (iter.second.dCscNorm < 1 || iter.second.dCscNorm != iter.second.dCscNorm)
 		{
-			colour = TERM_RED;
+			colour = Term::E_Colour::Red;
 		}
 		CscTable.AddRow({iter.first, std::to_string(iter.second.dCsc), std::to_string(iter.second.dCscNorm)}, colour);
 		sum += iter.second.dCscNorm;
 	}
 	CscTable.AddRow("AVRG", std::vector<double>({ tCvData.tCsc.mean, tCvData.tCscNorm.mean }));
 	CscTable.AddRow("STDDEV", std::vector<double>({ tCvData.tCsc.stddev, tCvData.tCscNorm.stddev }));
-	CscTable.Print(TERM_BOLDBLUE);
+	CscTable.Print(Term::E_Colour::BlueBold);
 }
 
 void Core::PrintCilVals(std::vector<int> vPulseWidths, std::map<int, std::vector<float>> mVals, std::vector<T_Stats> vStats)
@@ -331,7 +330,7 @@ void Core::PrintCilVals(std::vector<int> vPulseWidths, std::map<int, std::vector
 	};
 	cilTable.AddRow(avrgRowText);
 	cilTable.AddRow(stddevRowText);
-	cilTable.Print(TERM_YELLOW);
+	cilTable.Print(Term::E_Colour::Yellow);
 }
 
 void Core::PlotEis(T_DeviceData& tDeviceData, bool bForced)
@@ -673,7 +672,7 @@ bool Core::BatchAverages(const std::vector<std::string> sIds)
 	}
 
 	Term::Get()->Println("\nAverage impedances");
-	eisTable.Print(TERM_BOLDGREEN);
+	eisTable.Print(Term::E_Colour::GreenBold);
 
 
 	// CV
@@ -703,7 +702,7 @@ bool Core::BatchAverages(const std::vector<std::string> sIds)
 	cvTable.AddRow({ "mC", std::to_string(cvBatchStats.mean), std::to_string(cvBatchStats.stddev) });
 	cvTable.AddRow({ "mC/cm^2", std::to_string(cvNormBatchStats.mean), std::to_string(cvNormBatchStats.stddev) });
 	Term::Get()->Println("\nAverage CSCs");
-	cvTable.Print(TERM_BOLDBLUE);
+	cvTable.Print(Term::E_Colour::BlueBold);
 
 	
 	// CIL
@@ -742,6 +741,6 @@ bool Core::BatchAverages(const std::vector<std::string> sIds)
 		cilTable.AddRow({ std::to_string(pulseWidth), std::to_string(stats.mean), std::to_string(stats.stddev), std::to_string(statsNorm.mean), std::to_string(stats.stddev) });
 	}
 	Term::Get()->Println("\nAverage CILs");
-	cilTable.Print(TERM_YELLOW);
+	cilTable.Print(Term::E_Colour::Yellow);
 	return true;
 }

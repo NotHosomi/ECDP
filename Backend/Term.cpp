@@ -13,3 +13,10 @@ void Term::Set(Term* pNewInstance)
 {
 	ms_pInstance = pNewInstance;
 }
+
+void Term::Delete()
+{
+	// note, this will not call the destructor of any derived class
+	delete ms_pInstance;
+	ms_pInstance = nullptr;
+}

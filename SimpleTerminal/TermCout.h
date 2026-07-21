@@ -1,6 +1,7 @@
 #pragma once
 #include <Backend/Term.h>
 #include <string>
+#include <iostream>
 
 class TermCout : public Term
 {
@@ -12,12 +13,12 @@ public:
 	void Flush() override;
 	void Endline() override;
 
-	void Read(std::string& rInput);
-	void Read(int& rInput);
-	void Read(double& rInput);
-	void Read(float& rInput);
+	void Read(std::string& rInput) override;
+	void Read(int& rInput) override;
+	void Read(double& rInput) override;
+	void Read(float& rInput) override;
 private:
-	const std::string& GetTermCol(E_Colour eCol);
+	const std::string GetTermCol(E_Colour eCol);
 
 	template<typename T>
 	void ReadImpl(T& rInput);
