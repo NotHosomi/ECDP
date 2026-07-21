@@ -175,6 +175,11 @@ T_EisData Ingester::ParseEis(const std::vector<std::string>& vKeyVals) const
 		raw.vFrequencies = entry.GetColAsDouble("Frequency (Hz)");
 		raw.vImpedances = entry.GetColAsDouble("Z (\xCE\xA9)");
 		raw.vPhases = entry.GetColAsDouble("-Phase (\xC2\xB0)");
+		for (auto& val : raw.vPhases)
+		{
+			// correct neg phase to actual phaseval
+			val *= -1;
+		}
 
 		// grab key impedance values
 		std::vector<double> keyvals(vKeyVals.size(), -1);

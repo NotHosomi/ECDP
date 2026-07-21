@@ -192,6 +192,7 @@ T_CvData Core::Cv(T_DeviceData& tDeviceData, const Ingester& ingest)
 
 	if (tDeviceData.tCv.value().mElectrodes.size() == 0)
 	{
+		tDeviceData.tCv.reset();
 		return {};
 	}	
 	//std::vector<std::string> cvExcludes;
